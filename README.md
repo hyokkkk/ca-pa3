@@ -2,6 +2,7 @@
 # Project #3: RISC-V Assembly Programming
 ### Due: 11:59PM, November 8 (Sunday)
 
+## :star: venv deactivate하고 다시 activate시킨 후에는, make하기 전에 export PATH=/opt/riscv/bin:$PATH 써줘야함
 
 ## Introduction
 
