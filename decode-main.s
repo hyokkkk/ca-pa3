@@ -72,6 +72,7 @@ loop:
 	lw	a1, 0(t4)
 	mv	a2, sp
 	li	a3, 0x100
+        # 여기까지 19cycle 
 	call	decode
 
 	lw	t4, 0(t3)
