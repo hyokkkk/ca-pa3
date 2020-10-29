@@ -23,5 +23,16 @@
 #---------------------------------------------------------------------
 	.globl	decode
 decode:
-	# TODO
-	ret
+
+# length of output > outbytes : return -1
+
+    # inbytes == 0 : return 0
+    bne a1, zero, begin
+    li a0, 0
+    ebreak
+    ret 
+
+begin:
+
+
+    ret     #length of the output
