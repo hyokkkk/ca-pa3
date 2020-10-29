@@ -20,6 +20,7 @@
 
 	.globl	test
 test:
+        .word   test10
 	.word	test0
 	.word	test1
 	.word	test2
@@ -29,6 +30,7 @@ test:
 
 	.globl	ans
 ans:
+       .word   ans10
 	.word	ans0
 	.word	ans1
 	.word	ans2
@@ -36,12 +38,20 @@ ans:
 	.word	ans4
 	.word	ans5
 
+#self-made
+
+test10: 
+        .word   0x00000000      #inbytes==0, return 0 
+ans10:  
+        .word   0x00000000 
+        .word   0x00000000 
+
 test0:
-	.word	0x00000007
+	.word	0x00000007      #inbytes
 	.word	0x4513ac02
 	.word	0x00208826
 ans0:
-	.word	0x00000003
+	.word	0x00000003      #outbytes
 	.word	0x002020ca
 
 test1:
@@ -49,7 +59,7 @@ test1:
 	.word	0x12f0abed
 	.word	0x40601132
 ans1:
-	.word	0x00000004
+	.word	0x00000004      #outbytes 
 	.word	0xefbeadde
 
 test2:
