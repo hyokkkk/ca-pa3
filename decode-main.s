@@ -55,24 +55,25 @@ main:
 	#  s1:		word size
 	#--------------------------------------------------
 
-	addi	sp, sp, -16
-	sw	ra, 0(sp)
+	addi	sp, sp, -16     # 0x8001fff0
+	sw	ra, 0(sp)       # 0x80000018
 
-	addi	sp, sp, -0x100
-	mv	t0, zero
-	li	t1, 7       # 테케 늘릴때마다 수정 
-	la	t2, test
+	addi	sp, sp, -0x100  # 0x8001fef0
+	mv	t0, zero        # loop idx init 0
+	li	t1, 7           # 테케 늘릴때마다 수정
+	la	t2, test        # 0x80010000/ *t2 = &test
 	la	t3, ans
 	mv	t6, zero
 	li	s1, 4
 
 loop:
-	lw	t4, 0(t2)
-	addi	a0, t4, 4
-	lw	a1, 0(t4)
-	mv	a2, sp
+
+	lw	t4, 0(t2)   # t4 = test 
+	addi	a0, t4, 4   # a0 <- 1st input의 주솟값
+        lw	a1, 0(t4)   # t4값(주소)에 가서 val가져다 a1에 넣어
+	mv	a2, sp      # a2에 sp값을 넣어라.
 	li	a3, 0x100
-        # 여기까지 19cycle 
+        # 여기까지 19cycle
 	call	decode
 
 	lw	t4, 0(t3)

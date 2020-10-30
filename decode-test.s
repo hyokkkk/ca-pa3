@@ -30,7 +30,7 @@ test:
 
 	.globl	ans
 ans:
-       .word   ans10
+        .word   ans10
 	.word	ans0
 	.word	ans1
 	.word	ans2
@@ -40,11 +40,11 @@ ans:
 
 #self-made
 
-test10: 
-        .word   0x00000000      #inbytes==0, return 0 
-ans10:  
-        .word   0x00000000 
-        .word   0x00000000 
+test10:
+        .word   0x00000000      #inbytes==0, return 0
+ans10:
+        .word   0x00000000
+        .word   0x00000000
 
 test0:
 	.word	0x00000007      #inbytes
@@ -59,7 +59,7 @@ test1:
 	.word	0x12f0abed
 	.word	0x40601132
 ans1:
-	.word	0x00000004      #outbytes 
+	.word	0x00000004      #outbytes
 	.word	0xefbeadde
 
 test2:
