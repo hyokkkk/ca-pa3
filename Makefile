@@ -22,7 +22,7 @@ AS		= $(PREFIX)as
 OBJDUMP		= $(PREFIX)objdump
 
 PYRISC		= ../pyrisc/sim/snurisc.py      # <-- Change this line
-PYRISCOPT	= -l 1 #-c 19 	# show logs after cycle m
+PYRISCOPT	= -l 2 #-c 19 	# show logs after cycle m
 
 INCDIR		=
 LIBDIR		=
