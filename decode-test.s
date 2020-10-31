@@ -20,8 +20,8 @@
 
 	.globl	test
 test:
-        .word   test10
 	.word	test0
+        .word   test10
 	.word	test1
 	.word	test2
 	.word	test3
@@ -30,8 +30,8 @@ test:
 
 	.globl	ans
 ans:
-        .word   ans10
 	.word	ans0
+        .word   ans10
 	.word	ans1
 	.word	ans2
 	.word	ans3

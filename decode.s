@@ -38,14 +38,21 @@ decode:
 
 # start
 begin:
+    addi sp, sp, -128   # alloc stack
     # make empty a2, a3
-    sw a2, 0(sp)    # *outp
-    sw a3, 4(sp)    # outbytes
-
+    sw a2, 64(sp)     # *outp @feb0
+    sw a3, 68(sp)     # outbytes @feb4
+    sw ra, 72(sp)     # ra @feb8
     # load data from memory
     lw a3, 0(a0)
-    call convert_endian
+    call convert_endian 
+    # store rank at stack
+    call store_rank
 
+    # restore values
+    lw ra, 72(sp)       # ra to main func - sp를 바꾸기 전에 lw했어야지
+    addi sp, sp, 128    # dealloc stack
+    ret
 
 convert_endian: # (in, out) = (a3, a5) / use 3regs
     srli a4, a3, 24     # abxxxxxx -> 000000ab
@@ -59,7 +66,30 @@ convert_endian: # (in, out) = (a3, a5) / use 3regs
     slli a4, a4, 24     # ef000000
     srli a4, a4, 8      # 00ef0000
     or a5, a5, a4       # ghefcdab
+    ret
+
+store_rank:
+# TODO : 나중에 reg여유있으면 상위rank는 reg에 넣어놓기
+    srli a4, a5, 28     # rank 0
+    sw a4, 0(sp)
+    slli a4, a5, 4      # rank 1
+    srli a4, a4, 28
+    sw a4, 4(sp)
+    slli a4, a5, 8      # rank 2
+    srli a4, a4, 28
+    sw a4, 8(sp)
+    slli a4, a5, 12     # rank 3
+    srli a4, a4, 28
+    sw a4, 12(sp)
+    slli a4, a5, 16     # rank 4
+    srli a4, a4, 28
+    sw a4, 16(sp)
+    slli a4, a5, 20     # rank 5
+    srli a4, a4, 28
+    sw a4, 20(sp)
+    slli a4, a5, 24     # rank 6
+    srli a4, a4, 28
+    sw a4, 24(sp)
+    andi a4, a5, 0xf   # rank 7
+    sw a4, 28(sp)
     ebreak
-
-
-    ret     #length of the output
