@@ -28,34 +28,59 @@ decode:
 #   2. length of output(ret) > outbytes : return -1
 
 # TODO : caller saved reg만 사용하니까 save할 필요 없는거지? -> 내가 callee saved를 안 쓰면 되지.
-# TODO : stack pointer 조절해야하나? 모르겟음. 일단 다른거부터 먼저 하고 나중에 생각하자.
+
 
     # handle null string
-    bne a1, zero, begin
+    li a5, 4
+    blt a5, a1, begin       # 길이 4면 rank만 들어오는거임.
     li a0, 0
-
     ret
 
-# start
+
+
 begin:
     addi sp, sp, -128   # alloc stack
+
     # make empty a2, a3
-    sw a2, 64(sp)     # *outp @feb0
-    sw a3, 68(sp)     # outbytes @feb4
-    sw ra, 72(sp)     # ra @feb8
-    # load data from memory
-    lw a3, 0(a0)
-    call convert_endian
-    # store rank at stack
+    sw a2, 64(sp)       # *outp @feb0
+    sw a3, 68(sp)       # outbytes @feb4
+    sw ra, 72(sp)       # ra @feb8
+
+    # handling ranking
+    lw a3, 0(a0)            # load data
+    call convert_endian     # bigendian @a5
+    addi a1, a1, -4         # load한 걸 처리했으니 길이 -4
+    sw a5, 84(sp)           # todo : decode시 reg놀이 할 때 대비.
     call store_rank
+
+# a1: remain_bits, a2: padding->shift_remaining, a5: bigendian
+    addi a0, a0, 4          # next input addr
+    lw a3, 0(a0)
+    call convert_endian     # a5에 bigendian 담겨있음.
+
+    # read, handle padding_info
+    srli a2, a5, 28         # a2 : padding_info
+    slli a1, a1, 3          # 길이를 bit기준으로 바꿈.
+    slli a5, a5, 4          # remove padding_info
+    sub a1, a1, a2          # remain_bits = 길이-paddingbits
+    addi a1, a1, -4         #               - info_bits
+ebreak
+
+    # a2, a3, a5 usable
+
 
     # restore values
     lw ra, 72(sp)       # ra to main func - sp를 바꾸기 전에 lw했어야지
     addi sp, sp, 128    # dealloc stack
+    ebreak
     ret
 
 
-convert_endian: # (in, out) = (a3, a5) / use 3regs
+
+
+
+
+convert_endian: # (in, out) = (a3, a5) / use a3, a4, a5
     srli a4, a3, 24     # abxxxxxx -> 000000ab
     slli a5, a3, 24     # xxxxxxgh -> gh000000
     or a5, a4, a5       # gh0000ab
