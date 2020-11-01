@@ -9,11 +9,11 @@ int main () {
     int i = 0;
     int j = 0;
 
-    if (i >= 16) goto done;
+//   if (i >= 16) goto done;
 loopi:
     j = 0;
 
-    if (j >=8) goto done;
+//    if (j >=8) goto done;
 
 loopj:
     if (i == rank[j]){
