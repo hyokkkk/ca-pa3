@@ -7,12 +7,10 @@ int main () {
 
 // goto문
     int i = 0;
-    int flag = 0;
     int j = 0;
 
     if (i >= 16) goto done;
 loopi:
-    flag = 0;
     j = 0;
 
     if (j >=8) goto done;
@@ -20,14 +18,14 @@ loopi:
 
 loopj:
     if (i == rank[j]){
-        flag = 1;
+        goto iupdate;
     }
     j++;
     if(j < 8) goto loopj;
 
-    if (!flag){
-        rank[n++] = i;
-    }
+    rank[n++] = i;
+
+iupdate:
     i++;
     if (i < 16) goto loopi;
 
