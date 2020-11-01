@@ -14,7 +14,6 @@ loopi:
     j = 0;
 
     if (j >=8) goto done;
-    goto loopj;
 
 loopj:
     if (i == rank[j]){
