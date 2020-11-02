@@ -53,7 +53,7 @@ begin:
     sw a5, 84(sp)           # todo : decode시 reg놀이 할 때 대비.
     call store_rank
 
-# a1: remain_bits, a2: padding->shift_remaining, a5: bigendian
+# a0: inp addr, a1: total_bits_to_read, a5: bigendian
     addi a0, a0, 4          # next input addr
     lw a3, 0(a0)
     call convert_endian     # a5에 bigendian 담겨있음.
@@ -62,11 +62,12 @@ begin:
     srli a2, a5, 28         # a2 : padding_info
     slli a1, a1, 3          # 길이를 bit기준으로 바꿈.
     slli a5, a5, 4          # remove padding_info
-    sub a1, a1, a2          # remain_bits = 길이-paddingbits
+    sub a1, a1, a2          # total_bits_to_read = 길이-paddingbits
     addi a1, a1, -4         #               - info_bits
 ebreak
+############## 여기까지 패딩 가공 끝###################
+# a0: inp addr, a1: total_bits_to_read, a2: shiftcntdown, a3, a4, a5: bigendian
 
-    # a2, a3, a5 usable
 
 
     # restore values
@@ -74,11 +75,6 @@ ebreak
     addi sp, sp, 128    # dealloc stack
     ebreak
     ret
-
-
-
-
-
 
 convert_endian: # (in, out) = (a3, a5) / use a3, a4, a5
     srli a4, a3, 24     # abxxxxxx -> 000000ab
