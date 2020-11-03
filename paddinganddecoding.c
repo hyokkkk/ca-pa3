@@ -2,9 +2,9 @@
 
 
 //test0 len:21
-    unsigned int bigendian[] = {0xb43088c0, 0x89659708, 0x891e168b, 0xa1d10383, 0x8d69400};
-    int waiting_for_decoding = 28;
-    int totalBitsToRead = (0x18<<3)-32-4-7;
+//    unsigned int bigendian[] = {0xb43088c0, 0x89659708, 0x891e168b, 0xa1d10383, 0x8d69400};
+//    int waiting_for_decoding = 28;
+//    int totalBitsToRead = (0x18<<3)-32-4-7;
 
 
 //test1 len: 10
@@ -22,9 +22,9 @@
 
 
 //test3 len: 3
-//   unsigned int bigendian[3] = {0x68820000};
-//   int waiting_for_decoding = 28;
-//  int totalBitsToRead = 18;
+   unsigned int bigendian[3] = {0x68820000};
+   int waiting_for_decoding = 28;
+  int totalBitsToRead = 18;
     int i = 0;
     int a5 = 0;
     int outregEmpty=32;
@@ -46,29 +46,6 @@ read:
 ret:
     return;
 }
-// dowhileloop
-//    if(j >= loopcnt){
-//        return;
-//    }
-//    do{
-//        temp <<= 1;
-//        if(a5 >= 0x80000000){ temp ++; }
-//        a5 <<= 1;
-//        waiting_for_decoding --;
-//        totalBitsToRead --;
-//        j ++;
-//    } while(j < loopcnt);
-
-//    while(j < loopcnt){
-//        temp <<= 1;
-//        if(a5 >= 0x80000000){
-//            temp++;
-//        }
-//        a5 <<= 1;
-//        waiting_for_decoding --;
-//        totalBitsToRead --;
-//        j ++;
-//    }
 
 
 void load_data(){
@@ -186,6 +163,7 @@ seq_read();
     outlen ++;
     outregEmpty -= 4;
 
+printf("outregEmpty: %d\n", outregEmpty);
 
     if(totalBitsToRead == 0){
         outlen >>=1;
