@@ -1,120 +1,166 @@
 #include <stdio.h>
 
-//void decode(int bigendian, int shift_countdown){
-//    puts("start decode\n");
-//    while(shift_countdown > 0){
+
+//test0
+    unsigned int bigendian[] = {0xb43088c0, 0x89659708, 0x891e168b, 0xa1d10383, 0x8d69400};
+    int wating_for_decoding = 28;
+    int totalBitsToRead = (0x18<<3)-32-4-7;
+
+
+//test1
+//   unsigned int bigendian[3] = {0x8233f9a0, 0x8921f915, 0x636c0000};
+//   int wating_for_decoding = 28; //padding 다 없앤 후
+//   int totalBitsToRead = 74;
+
+//test2
+// unsigned int bigendian[] = {0x8a162130, 0x38303432, 0x38984509, 0x247d3004,
+//                            0x9b4c6cc0, 0xf1672989, 0x2041499a, 0x162131d1,
+//                            0x83b3a4c5, 0x09057c00};
 //
-//        shift_countdown --;
-//        printf("shift: %d\n", shift_countdown);
-//    }
-//    return;
-//}
-    unsigned int bigendian[3] = {0x68820000};
+//int wating_for_decoding = 28;
+//int totalBitsToRead = 306;
+
+
+//test3
+//   unsigned int bigendian[3] = {0x68820000};
+//   int wating_for_decoding = 28;
+//  int totalBitsToRead = 18;
     int i = 0;
     int a5 = 0;
-    int needdecoding = 32; //padding 다 없앤 후
-    int totalBitsToRead = 18;
     int outregEmpty=32;
     int outlen=0;
     int loopcnt;
     int temp = 0;
 //loop:
-void loop(){
+void seq_read(){
 
     for (int i = 0; i < loopcnt; i++){
         temp <<= 1;
         if(a5 >= 0x80000000){//msb==1
             temp++;
         }
+        printf("중간점검 temp: %x\n", temp);
         a5 <<= 1;
-        needdecoding --;
+        wating_for_decoding --;
+    totalBitsToRead --;
+        puts("loop옴");
     }
 }
 int main () {
     a5 = bigendian[i];
+
+
+check_last: 
+
+
 printf("a5 = %x\n", a5);
 
 if (a5 < 0x80000000){// msb == 0;
     a5 <<= 1;
-    needdecoding --;
+    wating_for_decoding --;
+    totalBitsToRead --;
 
-    printf("msb:0, needdecoding: %d\n", needdecoding);
+    printf("0---- wating_for_decoding: %d\n", wating_for_decoding);
 
-    if (needdecoding >= 2){
+    if (wating_for_decoding >= 2){
         loopcnt = 2;
     }
-    else if(needdecoding == 1){
+    else if(wating_for_decoding == 1){
         loopcnt = 1;
-        loop();
+        seq_read();
         i+=1;
         a5=bigendian[i];
+        wating_for_decoding = 32;
         //convert_endian;
         loopcnt = 1;
     }
     else{
         i+=1;
         a5=bigendian[i];
+        wating_for_decoding = 32;
         //convert_endian;
         loopcnt = 2;
     }
 }
 else{
     temp ++;
-    needdecoding --;
+    a5 <<= 1;
+    wating_for_decoding --;
+    totalBitsToRead --;
+    puts("1----");
+
+    if(wating_for_decoding == 0){
+        i+=1;
+        a5=bigendian[i];
+        wating_for_decoding = 32;
+    }
+    
     if (a5 < 0x80000000){ //10xxxxx
         a5 <<= 1;
-        needdecoding --;
-        if (needdecoding >= 2){
+        temp<<=1;
+        wating_for_decoding --;
+    totalBitsToRead --;
+        puts("10----");
+        if (wating_for_decoding >= 2){
             loopcnt = 2;
         }
-        else if (needdecoding == 1) { 
+        else if (wating_for_decoding == 1) { 
             loopcnt = 1;
-            loop();
+            seq_read();
             i+=1;
             a5=bigendian[i];
+        wating_for_decoding = 32;
             //convert_endian;
             loopcnt = 1;
         }
         else{
             i+=1;
             a5=bigendian[i];
+        wating_for_decoding = 32;
             //convert_endian;
             loopcnt = 2;
         }
     }
     else{ //11xxxxx
+        puts("11----");
         a5 <<= 1;
+        temp<<=1;
         temp++;
-        needdecoding --;
-        if(needdecoding >= 3){
+        wating_for_decoding --;
+    totalBitsToRead --;
+        if(wating_for_decoding >= 3){
             loopcnt = 3;
         }
-        else if(needdecoding == 2){
+        else if(wating_for_decoding == 2){
             loopcnt = 2;
-            loop();
+            seq_read();
             i+=1;
             a5=bigendian[i];
+        wating_for_decoding = 32;
             //convert_endian;
             loopcnt = 1;
         }
-        else if(needdecoding == 1){
+        else if(wating_for_decoding == 1){
             loopcnt = 1;
-            loop();
+            seq_read();
             i+=1;
             a5=bigendian[i];
+        wating_for_decoding = 32;
             //convert_endian;
             loopcnt = 2;
         }
         else {
             i+=1;
             a5=bigendian[i];
+        wating_for_decoding = 32;
             //convert_endian;
             loopcnt = 3;
         }
     }
+   
 }
 
-loop();
+seq_read();
 printf("aft loop a5: 0x%x\n", a5);
 goto decoding;
 
@@ -141,15 +187,45 @@ printf("temp: 0x%x\n", temp);
         case 0x1e: puts("rank14\n"); break;
         case 0x1f: puts("rank15\n"); break;
     }
+    
+    puts("write in outreg\n");
+    temp = 0;
     outlen ++;
     outregEmpty -= 4;
     
     printf("outlen: %d, outregEmpty: %d\n", outlen, outregEmpty);
-
-    if (needdecoding == 0 && totalBitsToRead == 32){
+    printf("wating_for_decoding: %d, totalBitsToRead: %d\n", wating_for_decoding, totalBitsToRead);
+    if ( totalBitsToRead <=32 && wating_for_decoding== 0){
+        puts("********마지막으로** convert->sw in mem\n");
         outlen >>= 1;
-        return outlen;
+        printf("RESULT OUTLEN: %d\n", outlen);
+        return 0;
     }
+    if (wating_for_decoding == 0){
+        i+=1;
+        a5=bigendian[i];
+    wating_for_decoding = 32;
+    }
+
+    if(outregEmpty == 0){
+        puts("***convert->sw in mem\n");
+        outregEmpty = 32;
+    }
+
+    printf("다음 loop 준비: total: %d\n---------------------\n", totalBitsToRead);
+//    puts("잠만 멈춰봐");
+//    return 0;
+    if(totalBitsToRead <0){
+    puts("total 0보다 작다!!!!");
+    return 0;
+    }
+//
+    if(totalBitsToRead <= wating_for_decoding){
+    wating_for_decoding = totalBitsToRead;
+}
+goto check_last;
+
+
 }
 
 
