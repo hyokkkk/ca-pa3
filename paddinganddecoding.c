@@ -3,13 +3,13 @@
 
 //test0 len:21
     unsigned int bigendian[] = {0xb43088c0, 0x89659708, 0x891e168b, 0xa1d10383, 0x8d69400};
-    int wating_for_decoding = 28;
+    int waiting_for_decoding = 28;
     int totalBitsToRead = (0x18<<3)-32-4-7;
 
 
 //test1 len: 10
 //   unsigned int bigendian[3] = {0x8233f9a0, 0x8921f915, 0x636c0000};
-//   int wating_for_decoding = 28; //padding 다 없앤 후
+//   int waiting_for_decoding = 28; //padding 다 없앤 후
 //   int totalBitsToRead = 74;
 
 //test2 len: 32+12=44
@@ -17,13 +17,13 @@
 //                            0x9b4c6cc0, 0xf1672989, 0x2041499a, 0x162131d1,
 //                            0x83b3a4c5, 0x09057c00};
 //
-//int wating_for_decoding = 28;
+//int waiting_for_decoding = 28;
 //int totalBitsToRead = 306;
 
 
 //test3 len: 3
 //   unsigned int bigendian[3] = {0x68820000};
-//   int wating_for_decoding = 28;
+//   int waiting_for_decoding = 28;
 //  int totalBitsToRead = 18;
     int i = 0;
     int a5 = 0;
@@ -39,7 +39,7 @@ read:
     temp <<= 1;
     if(a5 >= 0x80000000){ temp++; }
     a5 <<=1;
-    wating_for_decoding --;
+    waiting_for_decoding --;
     totalBitsToRead --;
     j ++;
     if(j < loopcnt) {
@@ -55,7 +55,7 @@ ret:
 //        temp <<= 1;
 //        if(a5 >= 0x80000000){ temp ++; }
 //        a5 <<= 1;
-//        wating_for_decoding --;
+//        waiting_for_decoding --;
 //        totalBitsToRead --;
 //        j ++;
 //    } while(j < loopcnt);
@@ -66,7 +66,7 @@ ret:
 //            temp++;
 //        }
 //        a5 <<= 1;
-//        wating_for_decoding --;
+//        waiting_for_decoding --;
 //        totalBitsToRead --;
 //        j ++;
 //    }
@@ -75,12 +75,12 @@ ret:
 void load_data(){
         i+=1;
         a5=bigendian[i];
-        wating_for_decoding = 32;
+        waiting_for_decoding = 32;
         //convert_endian;
 }
 void shift_decoding_bits(){
     a5 <<= 1;
-    wating_for_decoding --;
+    waiting_for_decoding --;
     totalBitsToRead --;
 }
 
@@ -92,10 +92,10 @@ decodingLoop:
 if (a5 < 0x80000000){// msb == 0;
     shift_decoding_bits();
 
-    if (wating_for_decoding >= 2){
+    if (waiting_for_decoding >= 2){
         loopcnt = 2;
     }
-    else if(wating_for_decoding == 1){
+    else if(waiting_for_decoding == 1){
         loopcnt = 1;
         seq_read();
         load_data();
@@ -110,7 +110,7 @@ else{
     temp ++;
     shift_decoding_bits();
 
-    if(wating_for_decoding == 0){
+    if(waiting_for_decoding == 0){
         load_data();
     }
 
@@ -118,10 +118,10 @@ else{
         temp<<=1;
         shift_decoding_bits();
 
-        if (wating_for_decoding >= 2){
+        if (waiting_for_decoding >= 2){
             loopcnt = 2;
         }
-        else if (wating_for_decoding == 1) {
+        else if (waiting_for_decoding == 1) {
             loopcnt = 1;
             seq_read();
             load_data();
@@ -137,16 +137,16 @@ else{
         temp++;
         shift_decoding_bits();
 
-        if(wating_for_decoding >= 3){
+        if(waiting_for_decoding >= 3){
             loopcnt = 3;
         }
-        else if(wating_for_decoding == 2){
+        else if(waiting_for_decoding == 2){
             loopcnt = 2;
             seq_read();
             load_data();
             loopcnt = 1;
         }
-        else if(wating_for_decoding == 1){
+        else if(waiting_for_decoding == 1){
             loopcnt = 1;
             seq_read();
             load_data();
@@ -187,13 +187,13 @@ change_digits:
     outlen ++;
     outregEmpty -= 4;
 
-    if ( totalBitsToRead <=32 && wating_for_decoding== 0){
+    if ( totalBitsToRead <=32 && waiting_for_decoding== 0){
         puts("convert-> store in memory");
         outlen >>= 1;
         printf("outlen: %d\n", outlen);
         return 0;
     }
-    if (wating_for_decoding == 0){
+    if (waiting_for_decoding == 0){
         load_data();
     }
     if(outregEmpty == 0){
@@ -203,8 +203,8 @@ change_digits:
     if(totalBitsToRead <0){
         return 0;
     }
-    if(totalBitsToRead <= wating_for_decoding){
-        wating_for_decoding = totalBitsToRead;
+    if(totalBitsToRead <= waiting_for_decoding){
+        waiting_for_decoding = totalBitsToRead;
     }
     temp = 0;
 goto decodingLoop;
