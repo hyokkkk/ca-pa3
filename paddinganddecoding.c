@@ -190,15 +190,18 @@ seq_read();
     if(totalBitsToRead == 0){
         outlen >>=1;
         printf("total to read: %d, outlen: %d\n", totalBitsToRead, outlen);
+        puts("다 읽었다. convert -> store in mem");
         if(outlen%4==1){
             puts("3*8<<해서 mem에 쓴다");
         }
-        puts("다 읽었다. convert -> store in mem");
+        puts("어짜피 끝이니 outreg, outregEmpty, a5 다 살릴 필요x");
         return 0;
     }
     if(outregEmpty == 0){
+        puts("a5에 값 남아있을 수도 있으니 sw해놓고 convert한다");
         puts("convert -> store in mem");
         outregEmpty = 32;
+        puts("outreg도 0으로 reset");
     }
     if(waiting_for_decoding == 0){
         load_data();
