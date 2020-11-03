@@ -12,7 +12,7 @@
 //   int wating_for_decoding = 28; //padding 다 없앤 후
 //   int totalBitsToRead = 74;
 
-//test2 len: 32+12=44 
+//test2 len: 32+12=44
 // unsigned int bigendian[] = {0x8a162130, 0x38303432, 0x38984509, 0x247d3004,
 //                            0x9b4c6cc0, 0xf1672989, 0x2041499a, 0x162131d1,
 //                            0x83b3a4c5, 0x09057c00};
@@ -31,19 +31,46 @@
     int outlen=0;
     int loopcnt;
     int temp = 0;
-//loop:
-void seq_read(){
 
-    for (int i = 0; i < loopcnt; i++){
-        temp <<= 1;
-        if(a5 >= 0x80000000){//msb==1
-            temp++;
-        }
-        a5 <<= 1;
-        wating_for_decoding --;
+
+void seq_read(){
+    int j = 0;
+read:
+    temp <<= 1;
+    if(a5 >= 0x80000000){ temp++; }
+    a5 <<=1;
+    wating_for_decoding --;
     totalBitsToRead --;
-    }
+    j ++;
+    if(j < loopcnt) {
+    goto read;}
+ret:
+    return;
 }
+// dowhileloop
+//    if(j >= loopcnt){
+//        return;
+//    }
+//    do{
+//        temp <<= 1;
+//        if(a5 >= 0x80000000){ temp ++; }
+//        a5 <<= 1;
+//        wating_for_decoding --;
+//        totalBitsToRead --;
+//        j ++;
+//    } while(j < loopcnt);
+
+//    while(j < loopcnt){
+//        temp <<= 1;
+//        if(a5 >= 0x80000000){
+//            temp++;
+//        }
+//        a5 <<= 1;
+//        wating_for_decoding --;
+//        totalBitsToRead --;
+//        j ++;
+//    }
+
 
 void load_data(){
         i+=1;
@@ -58,10 +85,12 @@ void shift_decoding_bits(){
 }
 
 int main () {
+
     a5 = bigendian[i];
-check_last:
+
+decodingLoop:
 if (a5 < 0x80000000){// msb == 0;
-shift_decoding_bits();
+    shift_decoding_bits();
 
     if (wating_for_decoding >= 2){
         loopcnt = 2;
@@ -69,71 +98,72 @@ shift_decoding_bits();
     else if(wating_for_decoding == 1){
         loopcnt = 1;
         seq_read();
-load_data(); 
+        load_data();
         loopcnt = 1;
     }
     else{
-load_data(); 
+        load_data();
         loopcnt = 2;
     }
 }
 else{
     temp ++;
+    shift_decoding_bits();
 
-shift_decoding_bits();
     if(wating_for_decoding == 0){
-load_data(); 
+        load_data();
     }
 
     if (a5 < 0x80000000){ //10xxxxx
         temp<<=1;
-shift_decoding_bits();
+        shift_decoding_bits();
+
         if (wating_for_decoding >= 2){
             loopcnt = 2;
         }
         else if (wating_for_decoding == 1) {
             loopcnt = 1;
             seq_read();
-load_data(); 
+            load_data();
             loopcnt = 1;
         }
         else{
-load_data(); 
+            load_data();
             loopcnt = 2;
         }
     }
     else{ //11xxxxx
         temp<<=1;
         temp++;
-shift_decoding_bits();
+        shift_decoding_bits();
+
         if(wating_for_decoding >= 3){
             loopcnt = 3;
         }
         else if(wating_for_decoding == 2){
             loopcnt = 2;
             seq_read();
-load_data(); 
+            load_data();
             loopcnt = 1;
         }
         else if(wating_for_decoding == 1){
             loopcnt = 1;
             seq_read();
-load_data(); 
+            load_data();
             loopcnt = 2;
         }
         else {
-load_data(); 
+            load_data();
             loopcnt = 3;
         }
     }
-
 }
 
 seq_read();
-goto decoding;
+goto change_digits;
 
 
-decoding:
+change_digits:
 
     switch(temp){
         case 0: puts("rank0\n"); break;
@@ -159,27 +189,24 @@ decoding:
     outregEmpty -= 4;
 
     if ( totalBitsToRead <=32 && wating_for_decoding== 0){
+        puts("convert-> store in memory");
         outlen >>= 1;
         printf("outlen: %d\n", outlen);
         return 0;
     }
     if (wating_for_decoding == 0){
-load_data(); 
+        load_data();
     }
-
     if(outregEmpty == 0){
+        puts("convert -> store in mem");
         outregEmpty = 32;
     }
-
     if(totalBitsToRead <0){
-    return 0;
+        return 0;
     }
-
     if(totalBitsToRead <= wating_for_decoding){
-    wating_for_decoding = totalBitsToRead;
+        wating_for_decoding = totalBitsToRead;
 }
-goto check_last;
-
-
+goto decodingLoop;
 }
 
