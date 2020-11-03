@@ -2,9 +2,9 @@
 
 
 //test0 len:21
-    unsigned int bigendian[] = {0xb43088c0, 0x89659708, 0x891e168b, 0xa1d10383, 0x8d69400};
-    int waiting_for_decoding = 28;
-    int totalBitsToRead = (0x18<<3)-32-4-7;
+//    unsigned int bigendian[] = {0xb43088c0, 0x89659708, 0x891e168b, 0xa1d10383, 0x8d69400};
+//    int waiting_for_decoding = 28;
+//    int totalBitsToRead = (0x18<<3)-32-4-7;
 
 
 //test1 len: 10
@@ -13,12 +13,12 @@
 //   int totalBitsToRead = 74;
 
 //test2 len: 32+12=44
-// unsigned int bigendian[] = {0x8a162130, 0x38303432, 0x38984509, 0x247d3004,
-//                            0x9b4c6cc0, 0xf1672989, 0x2041499a, 0x162131d1,
-//                            0x83b3a4c5, 0x09057c00};
-//
-//int waiting_for_decoding = 28;
-//int totalBitsToRead = 306;
+ unsigned int bigendian[] = {0x8a162130, 0x38303432, 0x38984509, 0x247d3004,
+                            0x9b4c6cc0, 0xf1672989, 0x2041499a, 0x162131d1,
+                            0x83b3a4c5, 0x09057c00};
+
+int waiting_for_decoding = 28;
+int totalBitsToRead = 306;
 
 
 //test3 len: 3
@@ -95,16 +95,17 @@ if (a5 < 0x80000000){// msb == 0;
     if (waiting_for_decoding >= 2){
         loopcnt = 2;
     }
-    else if(waiting_for_decoding == 1){
+    else if(waiting_for_decoding == 0){
+        load_data();
+        loopcnt = 2;
+    }
+    else {
         loopcnt = 1;
         seq_read();
         load_data();
         loopcnt = 1;
     }
-    else{
-        load_data();
-        loopcnt = 2;
-    }
+    
 }
 else{
     temp ++;
@@ -121,15 +122,15 @@ else{
         if (waiting_for_decoding >= 2){
             loopcnt = 2;
         }
-        else if (waiting_for_decoding == 1) {
+        else if( waiting_for_decoding ==0){
+            load_data();
+            loopcnt = 2;
+        }
+        else {
             loopcnt = 1;
             seq_read();
             load_data();
             loopcnt = 1;
-        }
-        else{
-            load_data();
-            loopcnt = 2;
         }
     }
     else{ //11xxxxx
@@ -146,15 +147,15 @@ else{
             load_data();
             loopcnt = 1;
         }
-        else if(waiting_for_decoding == 1){
+        else if(waiting_for_decoding ==0){
+            load_data();
+            loopcnt = 3;
+        }
+        else {
             loopcnt = 1;
             seq_read();
             load_data();
             loopcnt = 2;
-        }
-        else {
-            load_data();
-            loopcnt = 3;
         }
     }
 }
