@@ -34,15 +34,14 @@
 
 
 void seq_read(){
-    int j = 0;
 read:
     temp <<= 1;
     if(a5 >= 0x80000000){ temp++; }
     a5 <<=1;
     waiting_for_decoding --;
     totalBitsToRead --;
-    j ++;
-    if(j < loopcnt) {
+    loopcnt--;
+    if(loopcnt>0) {
     goto read;}
 ret:
     return;
@@ -78,7 +77,7 @@ void load_data(){
         waiting_for_decoding = 32;
         //convert_endian;
 }
-void shift_decoding_bits(){
+void shift_read_data(){
     a5 <<= 1;
     waiting_for_decoding --;
     totalBitsToRead --;
@@ -91,7 +90,7 @@ int main () {
 decodingLoop:
     temp = 0;
 if (a5 < 0x80000000){// msb == 0;
-    shift_decoding_bits();
+    shift_read_data();
 
     if (waiting_for_decoding >= 2){
         loopcnt = 2;
@@ -109,7 +108,7 @@ if (a5 < 0x80000000){// msb == 0;
 }
 else{
     temp ++;
-    shift_decoding_bits();
+    shift_read_data();
 
     if(waiting_for_decoding == 0){
         load_data();
@@ -117,7 +116,7 @@ else{
 
     if (a5 < 0x80000000){ //10xxxxx
         temp<<=1;
-        shift_decoding_bits();
+        shift_read_data();
 
         if (waiting_for_decoding >= 2){
             loopcnt = 2;
@@ -136,7 +135,7 @@ else{
     else{ //11xxxxx
         temp<<=1;
         temp++;
-        shift_decoding_bits();
+        shift_read_data();
 
         if(waiting_for_decoding >= 3){
             loopcnt = 3;
