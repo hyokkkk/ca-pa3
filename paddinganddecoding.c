@@ -161,10 +161,8 @@ else{
 }
 
 seq_read();
-goto change_digits;
 
 
-change_digits:
 
     switch(temp){
         case 0: puts("rank0\n"); break;
@@ -188,13 +186,13 @@ change_digits:
     outlen ++;
     outregEmpty -= 4;
 
-    if ( totalBitsToRead <=32 && waiting_for_decoding== 0){
-        puts("convert-> store in memory");
-        outlen >>= 1;
-        printf("outlen: %d\n", outlen);
-        return 0;
-    }
     if (waiting_for_decoding == 0){
+        if (totalBitsToRead <= 32){
+            puts("convert-> store in memory");
+            outlen >>= 1;
+            printf("outlen: %d\n", outlen);
+            return 0;
+        }
         load_data();
     }
     if(outregEmpty == 0){
