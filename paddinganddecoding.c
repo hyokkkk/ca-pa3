@@ -2,9 +2,9 @@
 
 
 //test0 len:21
-//    unsigned int bigendian[] = {0xb43088c0, 0x89659708, 0x891e168b, 0xa1d10383, 0x8d69400};
-//    int waiting_for_decoding = 28;
-//    int totalBitsToRead = (0x18<<3)-32-4-7;
+    unsigned int bigendian[] = {0xb43088c0, 0x89659708, 0x891e168b, 0xa1d10383, 0x8d69400};
+    int waiting_for_decoding = 28;
+    int totalBitsToRead = (0x18<<3)-32-4-7;
 
 
 //test1 len: 10
@@ -13,12 +13,12 @@
 //   int totalBitsToRead = 74;
 
 //test2 len: 32+12=44
- unsigned int bigendian[] = {0x8a162130, 0x38303432, 0x38984509, 0x247d3004,
-                            0x9b4c6cc0, 0xf1672989, 0x2041499a, 0x162131d1,
-                            0x83b3a4c5, 0x09057c00};
-
-int waiting_for_decoding = 28;
-int totalBitsToRead = 306;
+// unsigned int bigendian[] = {0x8a162130, 0x38303432, 0x38984509, 0x247d3004,
+//                            0x9b4c6cc0, 0xf1672989, 0x2041499a, 0x162131d1,
+//                            0x83b3a4c5, 0x09057c00};
+//
+//int waiting_for_decoding = 28;
+//int totalBitsToRead = 306;
 
 
 //test3 len: 3
@@ -186,22 +186,37 @@ seq_read();
     outlen ++;
     outregEmpty -= 4;
 
-    if (waiting_for_decoding == 0){
-        if (totalBitsToRead <= 32){
-            puts("convert-> store in memory");
-            outlen >>= 1;
-            printf("outlen: %d\n", outlen);
-            return 0;
+
+    if(totalBitsToRead == 0){
+        outlen >>=1;
+        printf("total to read: %d, outlen: %d\n", totalBitsToRead, outlen);
+        if(outlen%4==1){
+            puts("3*8<<해서 mem에 쓴다");
         }
-        load_data();
+        puts("다 읽었다. convert -> store in mem");
+        return 0;
     }
     if(outregEmpty == 0){
         puts("convert -> store in mem");
         outregEmpty = 32;
     }
-    if(totalBitsToRead <0){
-        return 0;
+    if(waiting_for_decoding == 0){
+        load_data();
     }
+
+
+//    if (waiting_for_decoding == 0){
+//        if (totalBitsToRead <= 32){
+//            puts("convert-> store in memory");
+//            outlen >>= 1;
+//            printf("total bits: %d, outlen: %d\n", totalBitsToRead, outlen);
+//            return 0;
+//        }
+//        load_data();
+//    }
+//    if(totalBitsToRead <0){
+//        return 0;
+//    }
     if(totalBitsToRead <= waiting_for_decoding){
         waiting_for_decoding = totalBitsToRead;
     }
