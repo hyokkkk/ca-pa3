@@ -184,7 +184,6 @@ change_digits:
         case 0x1f: puts("rank15\n"); break;
     }
 
-    temp = 0;
     outlen ++;
     outregEmpty -= 4;
 
@@ -206,7 +205,8 @@ change_digits:
     }
     if(totalBitsToRead <= wating_for_decoding){
         wating_for_decoding = totalBitsToRead;
-}
+    }
+    temp = 0;
 goto decodingLoop;
 }
 
