@@ -89,6 +89,7 @@ int main () {
     a5 = bigendian[i];
 
 decodingLoop:
+    temp = 0;
 if (a5 < 0x80000000){// msb == 0;
     shift_decoding_bits();
 
@@ -206,7 +207,6 @@ change_digits:
     if(totalBitsToRead <= waiting_for_decoding){
         waiting_for_decoding = totalBitsToRead;
     }
-    temp = 0;
 goto decodingLoop;
 }
 
