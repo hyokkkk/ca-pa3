@@ -8,9 +8,9 @@
 
 
 //test1 len: 10
-//   unsigned int bigendian[3] = {0x8233f9a0, 0x8921f915, 0x636c0000};
-//   int waiting_for_decoding = 28; //padding 다 없앤 후
-//   int totalBitsToRead = 74;
+   unsigned int bigendian[3] = {0x8233f9a0, 0x8921f915, 0x636c0000};
+   int waiting_for_decoding = 28; //padding 다 없앤 후
+   int totalBitsToRead = 74;
 
 //test2 len: 32+12=44
 // unsigned int bigendian[] = {0x8a162130, 0x38303432, 0x38984509, 0x247d3004,
@@ -21,10 +21,15 @@
 //int totalBitsToRead = 306;
 
 
+
 //test3 len: 3
-   unsigned int bigendian[3] = {0x68820000};
-   int waiting_for_decoding = 28;
-  int totalBitsToRead = 18;
+//   unsigned int bigendian[3] = {0x68820000};
+//   int waiting_for_decoding = 28;
+//  int totalBitsToRead = 18;
+
+
+
+
     int i = 0;
     int a5 = 0;
     int outregEmpty=32;
@@ -82,7 +87,7 @@ if (a5 < 0x80000000){// msb == 0;
         load_data();
         loopcnt = 1;
     }
-    
+
 }
 else{
     temp ++;
@@ -161,12 +166,13 @@ seq_read();
     }
 
     outlen ++;
+    printf("%d\n", outlen);
     outregEmpty -= 4;
 
 printf("outregEmpty: %d\n", outregEmpty);
 
     if(totalBitsToRead == 0){
-        outlen >>=1;
+//        outlen >>=1;
         printf("total to read: %d, outlen: %d\n", totalBitsToRead, outlen);
         puts("다 읽었다. convert -> store in mem");
         if(outlen%4==1){
@@ -185,6 +191,11 @@ printf("outregEmpty: %d\n", outregEmpty);
         load_data();
     }
 
+    if(totalBitsToRead <= waiting_for_decoding){
+        waiting_for_decoding = totalBitsToRead;
+    }
+goto decodingLoop;
+}
 
 //    if (waiting_for_decoding == 0){
 //        if (totalBitsToRead <= 32){
@@ -198,9 +209,4 @@ printf("outregEmpty: %d\n", outregEmpty);
 //    if(totalBitsToRead <0){
 //        return 0;
 //    }
-    if(totalBitsToRead <= waiting_for_decoding){
-        waiting_for_decoding = totalBitsToRead;
-    }
-goto decodingLoop;
-}
 
