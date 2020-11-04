@@ -29,7 +29,7 @@ from_inputbuf_to_token:
         slli a0, a0, 1          # token <<1;
         slli a5, a5, 1          # a5 <<=1;
         addi a2, a2, -1         # bits_in_inputbuf --;
-        addi a1, a1, -1         # bits_in_buf_and_mem --;
+        addi a1, a1, -1         # bits_should_be_read --;
 
         ret
 
@@ -56,7 +56,7 @@ sequential_read:
 
         dontadd:
             slli a5, a5, 1
-            addi a1, a1, -1     # bits_in_buf_and_mem --;
+            addi a1, a1, -1     # bits_should_be_read --;
             addi a2, a2, -1     # bits_in_inputbuf --;
             addi a3, a3, -1     # loopcnt --;
             ble a3, zero, exit  # a3 <= 0, ret
@@ -166,10 +166,9 @@ begin:
         lw a3, 0(a0)            # load rank
         call convert_endian     # bigendian @a5
         addi a1, a1, -4         # load한 걸 처리했으니 길이 -4byte
-#    sw a5, 76(sp)           # todo : decode시 reg놀이 할 때 대비.
         call store_rank
 
-# a0: inp addr, a1: bits_in_buf_and_mem, a5: bigendian
+# a0: inp addr, a1: bits_should_be_read, a5: bigendian
         addi a0, a0, 4          # next input addr
         lw a3, 0(a0)            # load padding_info + codes
         addi a0, a0, 4          # 다음에 바로 읽도록 update해놓는다.
@@ -183,7 +182,7 @@ begin:
         srli a2, a5, 28         # a2 : padding_info
         slli a1, a1, 3          # 길이를 bit기준으로 바꿈.
         slli a5, a5, 4          # remove padding_info
-        sub a1, a1, a2          # bits_in_buf_and_mem = 길이-paddingbits
+        sub a1, a1, a2          # bits_should_be_read = 길이-paddingbits
         addi a1, a1, -4         #               - info_bits
         li a2, 28
 
@@ -465,7 +464,6 @@ full_outBuf:
 
         li a4, 32                   # 비웠으니 empty_bits_in_outbuf = 32로 다시 초기화
         li a3, 0                    # outbuf도 0으로 초기화
-#        sw a3, 88(sp)               # outbuf 저장해놓음 (
         sw a4, 84(sp)               # empty_bits_in_outbuf도 저장해놓음.
 
         lw a5, 80(sp)               # 저장해놨던 buf 다시 a5에 넣음.
@@ -484,7 +482,7 @@ inpBuf_empty:
 
 lastBuf:
         bltu a2, a1, decodeAgain    # 마지막 loop면 waiting > total일 수도 있음.
-        mv a2, a1                   # bits_in_inputbuf = bits_in_buf_and_mem
+        mv a2, a1                   # bits_in_inputbuf = bits_should_be_read
 
 
 decodeAgain:
@@ -510,9 +508,4 @@ return:
 err:
         lui a0, 0x01234             #err check
         jal Exit
-
-
-
-
-
 
