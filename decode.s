@@ -25,17 +25,17 @@
 #-------------------------------------------------------------------#
 
 
-read_data_shift:
+from_inputbuf_to_token:
         slli a5, a5, 1          # a5 <<=1;
-        addi a2, a2, -1         # waiting_for_decoding --;
-        addi a1, a1, -1         # total_bits_to_read --;
+        addi a2, a2, -1         # bits_in_inputbuf --;
+        addi a1, a1, -1         # bits_in_buf_and_mem --;
 
         ret
 
 load_data:
         lw a4, 92(sp)
         lw a3, 0(a4)            # a3에 data load받음
-        li a2, 32               # waiting_for_decoding = 32로 초기화
+        li a2, 32               # bits_in_inputbuf = 32로 초기화
         addi a4, a4, 4          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
         sw a4, 92(sp)           # inp addr 다시 저장
         sw ra, 76(sp)
@@ -55,8 +55,8 @@ sequential_read:
 
         dontadd:
             slli a5, a5, 1
-            addi a1, a1, -1     # total_bits_to_read --;
-            addi a2, a2, -1     # waiting_for_decoding --;
+            addi a1, a1, -1     # bits_in_buf_and_mem --;
+            addi a2, a2, -1     # bits_in_inputbuf --;
             addi a3, a3, -1     # loopcnt --;
             ble a3, zero, exit  # a3 <= 0, ret
             beq x0, x0, read
@@ -168,21 +168,21 @@ begin:
 #    sw a5, 76(sp)           # todo : decode시 reg놀이 할 때 대비.
         call store_rank
 
-# a0: inp addr, a1: total_bits_to_read, a5: bigendian
+# a0: inp addr, a1: bits_in_buf_and_mem, a5: bigendian
         addi a0, a0, 4          # next input addr
         lw a3, 0(a0)            # load padding_info + codes
         addi a0, a0, 4          # 다음에 바로 읽도록 update해놓는다.
         sw a0, 92(sp)           # inp addr는 쓰고 바로 담자.
 
         call convert_endian     # a5에 bigendian 담겨있음.
-        li a4, 32               # outregEmptybit = 32로 초기화해놔야함.
+        li a4, 32               # left_bits_in_outbuf = 32로 초기화해놔야함.
         sw a4, 84(sp)           # 메모리에 저장해놓고 나중에 사용.
 
         # read, handle padding_info
         srli a2, a5, 28         # a2 : padding_info
         slli a1, a1, 3          # 길이를 bit기준으로 바꿈.
         slli a5, a5, 4          # remove padding_info
-        sub a1, a1, a2          # total_bits_to_read = 길이-paddingbits
+        sub a1, a1, a2          # bits_in_buf_and_mem = 길이-paddingbits
         addi a1, a1, -4         #               - info_bits
         li a2, 28
 
@@ -200,7 +200,7 @@ decoding_loop:
 
     L0xxxx:
         bgeu a5, a4, L1xxxx         # a5 >= 0x80000000
-        call read_data_shift        # msb0
+        call from_inputbuf_to_token        # msb0
 
         li a4, 2
         bltu a2, a4, L0buf0bit
@@ -222,65 +222,65 @@ decoding_loop:
 
     L1xxxx:
         addi a0, a0, 1
-        call read_data_shift
+        call from_inputbuf_to_token
         bne a2, zero, L10xxx
         call load_data
 
-    L10xxx:
-        lui a4, 0x80000
-        bgeu a5, a4, L11xxx
-        slli a0, a0, 1
-        call read_data_shift
+        L10xxx:
+            lui a4, 0x80000
+            bgeu a5, a4, L11xxx
+            slli a0, a0, 1
+            call from_inputbuf_to_token
 
-        li a4, 2
-        bltu a2, a4, L10buf0bit
-        li a3, 2
-        jal escapeLoop
+            li a4, 2
+            bltu a2, a4, L10buf0bit
+            li a3, 2
+            jal escapeLoop
 
-        L10buf0bit:
-                bne a2, zero, L10buf1bit
-                call load_data
-                li a3, 2
-                jal escapeLoop
+            L10buf0bit:
+                    bne a2, zero, L10buf1bit
+                    call load_data
+                    li a3, 2
+                    jal escapeLoop
 
-        L10buf1bit:
-                li a3, 1
-                call sequential_read
-                call load_data
-                li a3, 1
-                jal escapeLoop
+            L10buf1bit:
+                    li a3, 1
+                    call sequential_read
+                    call load_data
+                    li a3, 1
+                    jal escapeLoop
 
-    L11xxx:
-        slli a0, a0, 1
-        addi a0, a0, 1
-        call read_data_shift
+        L11xxx:
+            slli a0, a0, 1
+            addi a0, a0, 1
+            call from_inputbuf_to_token
 
-        li a4, 3
-        bltu a2, a4, L11buf2bit
-        li a3, 3
-        jal escapeLoop
+            li a4, 3
+            bltu a2, a4, L11buf2bit
+            li a3, 3
+            jal escapeLoop
 
-        L11buf2bit:
-                li a4, 2
-                bne a2, a4, L11buf0bit
-                li a3, 2
-                call sequential_read
-                call load_data
-                li a3, 1
-                jal escapeLoop
+            L11buf2bit:
+                    li a4, 2
+                    bne a2, a4, L11buf0bit
+                    li a3, 2
+                    call sequential_read
+                    call load_data
+                    li a3, 1
+                    jal escapeLoop
 
-        L11buf0bit:
-                bne a2, zero, L11buf1bit
-                call load_data
-                li a3, 3
-                jal escapeLoop
+            L11buf0bit:
+                    bne a2, zero, L11buf1bit
+                    call load_data
+                    li a3, 3
+                    jal escapeLoop
 
-        L11buf1bit:
-                li a3, 1
-                call sequential_read
-                call load_data
-                li a3, 2
-                jal escapeLoop
+            L11buf1bit:
+                    li a3, 1
+                    call sequential_read
+                    call load_data
+                    li a3, 2
+                    jal escapeLoop
 #-----------------------------------------------------#
 
 
@@ -412,11 +412,11 @@ match_with_rank:
 
 # 0x80000410
 check_outreg_full:
-# 4bit token하나가 더 추가됐으니 outlen도 더하고, outregEmptybit 도 -4하자.
+# 4bit token하나가 더 추가됐으니 outlen도 더하고, left_bits_in_outbuf 도 -4하자.
         lw a0, 100(sp)              # outlen load
         addi a0, a0, 1              # outlen ++
 
-        lw a4, 84(sp)               # outregEmptybit. 시작할 때 32로 초기화 해야함
+        lw a4, 84(sp)               # left_bits_in_outbuf. 시작할 때 32로 초기화 해야함
         addi a4, a4, -4
 
 
@@ -448,7 +448,7 @@ noMoreData:
 
 #0x80000438
 full_outBuf:
-        bne a4, x0, inpBuf_empty    # outregEmptybit ==0 이면 밑에 수행
+        bne a4, x0, inpBuf_empty    # left_bits_in_outbuf ==0 이면 밑에 수행
         sw a5, 80(sp)               # buf에 남아있을 수도 있으니 일단 save
         call convert_endian         # a5에 결과가 담김.
 
@@ -457,16 +457,16 @@ full_outBuf:
         addi a3, a3, 4              # outp addr update
         sw a3, 96(sp)               # 다시 그 자리에 저장
 
-        li a4, 32                   # 비웠으니 outregEmptybit = 32로 다시 초기화
+        li a4, 32                   # 비웠으니 left_bits_in_outbuf = 32로 다시 초기화
         li a3, 0                    # outreg도 0으로 초기화
         sw a3, 88(sp)               # outreg 저장해놓음
-        sw a4, 84(sp)               # outregEmptybit도 저장해놓음.
+        sw a4, 84(sp)               # left_bits_in_outbuf도 저장해놓음.
 
         lw a5, 80(sp)               # 저장해놨던 buf 다시 a5에 넣음.
 
 
 inpBuf_empty:
-        bne a2, zero, lastBuf       # waiting_for_decoding == 0이면 밑에 수행
+        bne a2, zero, lastBuf       # bits_in_inputbuf == 0이면 밑에 수행
         sw a3, 88(sp)               # 추가함.
         sw a4, 84(sp)
 
@@ -478,12 +478,12 @@ inpBuf_empty:
 
 lastBuf:
         bltu a2, a1, decodeAgain    # 마지막 loop면 waiting > total일 수도 있음.
-        mv a2, a1                   # waiting_for_decoding = total_bits_to_read
+        mv a2, a1                   # bits_in_inputbuf = bits_in_buf_and_mem
 
 
 decodeAgain:
         sw a3, 88(sp)               # outputreg 다 안 찬 상태로 다시 loop돌면 이 값 없어짐.
-        sw a4, 84(sp)               # outregEmptybit도 다시 저장.
+        sw a4, 84(sp)               # left_bits_in_outbuf도 다시 저장.
         sw a0, 100(sp)              # outlen도 저장
         jal decoding_loop
 
