@@ -26,6 +26,7 @@
 
 
 from_inputbuf_to_token:
+        slli a0, a0, 1          # token <<1;
         slli a5, a5, 1          # a5 <<=1;
         addi a2, a2, -1         # bits_in_inputbuf --;
         addi a1, a1, -1         # bits_in_buf_and_mem --;
@@ -175,7 +176,7 @@ begin:
         sw a0, 92(sp)           # inp addr는 쓰고 바로 담자.
 
         call convert_endian     # a5에 bigendian 담겨있음.
-        li a4, 32               # left_bits_in_outbuf = 32로 초기화해놔야함.
+        li a4, 32               # empty_bits_in_outbuf = 32로 초기화해놔야함.
         sw a4, 84(sp)           # 메모리에 저장해놓고 나중에 사용.
 
         # read, handle padding_info
@@ -221,15 +222,15 @@ decoding_loop:
                 jal escapeLoop
 
     L1xxxx:
-        addi a0, a0, 1
         call from_inputbuf_to_token
+        addi a0, a0, 1
+
         bne a2, zero, L10xxx
         call load_data
 
         L10xxx:
             lui a4, 0x80000
             bgeu a5, a4, L11xxx
-            slli a0, a0, 1
             call from_inputbuf_to_token
 
             li a4, 2
@@ -251,9 +252,8 @@ decoding_loop:
                     jal escapeLoop
 
         L11xxx:
-            slli a0, a0, 1
-            addi a0, a0, 1
             call from_inputbuf_to_token
+            addi a0, a0, 1
 
             li a4, 3
             bltu a2, a4, L11buf2bit
@@ -412,11 +412,17 @@ match_with_rank:
 
 # 0x80000410
 check_outreg_full:
-# 4bit token하나가 더 추가됐으니 outlen도 더하고, left_bits_in_outbuf 도 -4하자.
+# 4bit token하나가 더 추가됐으니 outlen도 더하고, empty_bits_in_outbuf 도 -4하자.
         lw a0, 100(sp)              # outlen load
         addi a0, a0, 1              # outlen ++
 
-        lw a4, 84(sp)               # left_bits_in_outbuf. 시작할 때 32로 초기화 해야함
+# 혹시 outlen 긴 거를 무시하고 계속 메모리에 써서?
+        lw a4, 68(sp)               # outbytes 다시 로드
+        slli a4, a4, 1              # outlen이 2배 돼있는 상황이니 outbyte를 2배로 해서 비교
+        bltu a4, a0, check_overflow    # outbytes < outlen -> -1 return하러 가자
+
+no_overflow:
+        lw a4, 84(sp)               # empty_bits_in_outbuf. 시작할 때 32로 초기화 해야함
         addi a4, a4, -4
 
 
@@ -448,7 +454,7 @@ noMoreData:
 
 #0x80000438
 full_outBuf:
-        bne a4, x0, inpBuf_empty    # left_bits_in_outbuf ==0 이면 밑에 수행
+        bne a4, x0, inpBuf_empty    # empty_bits_in_outbuf ==0 이면 밑에 수행
         sw a5, 80(sp)               # buf에 남아있을 수도 있으니 일단 save
         call convert_endian         # a5에 결과가 담김.
 
@@ -457,10 +463,10 @@ full_outBuf:
         addi a3, a3, 4              # outp addr update
         sw a3, 96(sp)               # 다시 그 자리에 저장
 
-        li a4, 32                   # 비웠으니 left_bits_in_outbuf = 32로 다시 초기화
-        li a3, 0                    # outreg도 0으로 초기화
-        sw a3, 88(sp)               # outreg 저장해놓음
-        sw a4, 84(sp)               # left_bits_in_outbuf도 저장해놓음.
+        li a4, 32                   # 비웠으니 empty_bits_in_outbuf = 32로 다시 초기화
+        li a3, 0                    # outbuf도 0으로 초기화
+#        sw a3, 88(sp)               # outbuf 저장해놓음 (
+        sw a4, 84(sp)               # empty_bits_in_outbuf도 저장해놓음.
 
         lw a5, 80(sp)               # 저장해놨던 buf 다시 a5에 넣음.
 
@@ -482,8 +488,8 @@ lastBuf:
 
 
 decodeAgain:
-        sw a3, 88(sp)               # outputreg 다 안 찬 상태로 다시 loop돌면 이 값 없어짐.
-        sw a4, 84(sp)               # left_bits_in_outbuf도 다시 저장.
+        sw a3, 88(sp)               # outbuf 다 안 찬 상태로 다시 loop돌면 이 값 없어짐.
+        sw a4, 84(sp)               # empty_bits_in_outbuf도 다시 저장.
         sw a0, 100(sp)              # outlen도 저장
         jal decoding_loop
 
@@ -494,6 +500,7 @@ Exit:
         lw a4, 68(sp)               #outbytes 다시 로드
         addi sp, sp, 128            # dealloc stack
 
+check_overflow:
         bgeu a4, a0, return         # outbytes >= outlen -> 걍 return
         addi a0, zero, -1           # outbytes < outlen -> -1 return
 
