@@ -2,4 +2,5 @@
 *.exe
 decode
 *.out
+*.swo
 *.swp
