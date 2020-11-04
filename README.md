@@ -7,9 +7,11 @@
 > $ riscv32-unknown-elf-objdump -D decode > decode.objdump      
 > 하면 decode 파일을 disassemble해서 pc 명령 볼 수 있다.
 
-> MAKEFILE 수정해서 단계 설정하면 옵션도 줄 수 있다.
+> MAKEFILE 수정해서 단계 설정하면 옵션도 줄 수 있다.        
+> 2단계가 기본, 3단계는 instruction도 나옴.
 
-> sim/component.py 수정하면 원하는대로 볼 수 있음. 
+> sim/component.py 수정하면 원하는대로 볼 수 있음.      
+> 매 실행마다 특정 reg와 mem만 추적하기 위해 Makefile 6단계로 해놓고 .py수정해서 사용함.
 
 
 ## Introduction
