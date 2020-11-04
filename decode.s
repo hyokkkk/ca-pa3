@@ -143,6 +143,7 @@ decode:
         li a5, 4
         bltu a5, a1, begin       # 길이 4면 rank만 들어오는거임.
         li a0, 0
+        
         ret
 
 
@@ -155,7 +156,7 @@ begin:
         sw ra, 72(sp)       # ra @feb8
 
         # handling ranking
-        lw a3, 0(a0)            # load rank 
+        lw a3, 0(a0)            # load rank
         call convert_endian     # bigendian @a5
         addi a1, a1, -4         # load한 걸 처리했으니 길이 -4byte
 #    sw a5, 76(sp)           # todo : decode시 reg놀이 할 때 대비.
@@ -408,7 +409,7 @@ noMoreData:
         andi a2, a0, 0x3       # outlen의 last 1byte 추출
 
         beq a2, zero, print     # 마지막 1byte가 0이면 걍 인쇄
-        addi a4, zero, 1        # a4 : 1 
+        addi a4, zero, 1        # a4 : 1
         bne a2, a4, not_mod1    # 길이가 1 남으면 끝 3byte 제거
         srli a5, a5, 24
 not_mod1:
@@ -447,8 +448,12 @@ full_outBuf:
 is_InBuf_empty:
         bne a2, zero, lastBuf      # waiting_for_decoding == 0이면 밑에 수행
         sw a3, 88(sp)               # 추가함.
+        sw a4, 84(sp)
+
         call load_data
 
+        lw a3, 88(sp)
+        lw a4, 84(sp)
 
 lastBuf:
         bltu a2, a1, gotoDecodingLoop    # 마지막 loop면 waiting > total일 수도 있음.
@@ -470,6 +475,7 @@ Exit:
         bgeu a4, a0, return    # outbytes >= outlen -> 걍 return
         addi a0, zero, -1   # outbytes < outlen -> -1 return
 return:
+
         ret
 
 err:
