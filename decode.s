@@ -23,31 +23,36 @@
 #---------------------------------------------------------------------
 	.globl	decode
 #-------------------------------------------------------------------#
+
+
 read_data_shift:
-#755cycle
-        slli a5, a5, 1      # a5 <<=1;
-        addi a2, a2, -1     # waiting_for_decoding --;
-        addi a1, a1, -1     # total_bits_to_read --;
+        slli a5, a5, 1          # a5 <<=1;
+        addi a2, a2, -1         # waiting_for_decoding --;
+        addi a1, a1, -1         # total_bits_to_read --;
+
         ret
 
 load_data:
         lw a4, 92(sp)
-        lw a3, 0(a4)        # a3에 data load받음
-        li a2, 32           # waiting_for_decoding = 32로 초기화
-        addi a4, a4, 4      # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
-        sw a4, 92(sp)       # inp addr 다시 저장
+        lw a3, 0(a4)            # a3에 data load받음
+        li a2, 32               # waiting_for_decoding = 32로 초기화
+        addi a4, a4, 4          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
+        sw a4, 92(sp)           # inp addr 다시 저장
         sw ra, 76(sp)
         call convert_endian
-        lw ra, 76(sp)        # begin으로 돌아갈 ra
+        lw ra, 76(sp)           # begin으로 돌아갈 ra
         ret
+
 
 #0x80000034
 sequential_read:
         lui a4, 0x80000
+
         read:
-            slli a0, a0, 1  # token <<1
+            slli a0, a0, 1      # token <<1
             bltu a5, a4, dontadd
-            addi a0, a0, 1  # msb 1이면 token에 더해줌
+            addi a0, a0, 1      # msb 1이면 token에 더해줌
+
         dontadd:
             slli a5, a5, 1
             addi a1, a1, -1     # total_bits_to_read --;
@@ -55,77 +60,79 @@ sequential_read:
             addi a3, a3, -1     # loopcnt --;
             ble a3, zero, exit  # a3 <= 0, ret
             beq x0, x0, read
+
         exit:
             ret
 
-convert_endian: # (in, out) = (a3, a5) / use a3, a4, a5
-        srli a4, a3, 24     # abxxxxxx -> 000000ab
-        slli a5, a3, 24     # xxxxxxgh -> gh000000
-        or a5, a4, a5       # gh0000ab
-        srli a4, a3, 16     # abcdefgh -> 0000abcd
-        andi a4, a4, 0xff   # 000000cd
-        slli a4, a4, 8      # 0000cd00
-        or a5, a5, a4       # gh00cdab
-        srli a4, a3, 8      # abcdefgh -> 00abcdef
-        slli a4, a4, 24     # ef000000
-        srli a4, a4, 8      # 00ef0000
-        or a5, a5, a4       # ghefcdab
+
+convert_endian:                 # (in, out) = (a3, a5) / use a3, a4, a5
+        srli a4, a3, 24         # abxxxxxx -> 000000ab
+        slli a5, a3, 24         # xxxxxxgh -> gh000000
+        or a5, a4, a5           # gh0000ab
+        srli a4, a3, 16         # abcdefgh -> 0000abcd
+        andi a4, a4, 0xff       # 000000cd
+        slli a4, a4, 8          # 0000cd00
+        or a5, a5, a4           # gh00cdab
+        srli a4, a3, 8          # abcdefgh -> 00abcdef
+        slli a4, a4, 24         # ef000000
+        srli a4, a4, 8          # 00ef0000
+        or a5, a5, a4           # ghefcdab
         ret
 
-store_rank:
-        sw a0, 92(sp)       # empty a0
-        sw a1, 64(sp)       # empty a1
 
-# TODO : 나중에 reg여유있으면 상위rank는 reg에 넣어놓기
-        srli a4, a5, 28     # rank 0
+store_rank:
+        sw a0, 92(sp)           # empty a0
+        sw a1, 64(sp)           # empty a1
+
+        srli a4, a5, 28         # rank 0
         sw a4, 0(sp)
-        slli a4, a5, 4      # rank 1
+        slli a4, a5, 4          # rank 1
         srli a4, a4, 28
         sw a4, 4(sp)
-        slli a4, a5, 8      # rank 2
+        slli a4, a5, 8          # rank 2
         srli a4, a4, 28
         sw a4, 8(sp)
-        slli a4, a5, 12     # rank 3
+        slli a4, a5, 12         # rank 3
         srli a4, a4, 28
         sw a4, 12(sp)
-        slli a4, a5, 16     # rank 4
+        slli a4, a5, 16         # rank 4
         srli a4, a4, 28
         sw a4, 16(sp)
-        slli a4, a5, 20     # rank 5
+        slli a4, a5, 20         # rank 5
         srli a4, a4, 28
         sw a4, 20(sp)
-        slli a4, a5, 24     # rank 6
+        slli a4, a5, 24         # rank 6
         srli a4, a4, 28
         sw a4, 24(sp)
-        andi a4, a5, 0xf    # rank 7
+        andi a4, a5, 0xf        # rank 7
         sw a4, 28(sp)
 
         # put rank 8-15 in the memory
         # a0, a1, a2, a3, a4 usable
-        addi a2, sp, 32     # a2: rank 8 들어갈 주소
-        li a3, 0            # a3: int i = 0
-        li a4, 0            # a4: int j = 0
+        addi a2, sp, 32             # a2: rank 8 들어갈 주소
+        li a3, 0                    # a3: int i = 0
+        li a4, 0                    # a4: int j = 0
 
         loopi:
-            li a4, 0            # j = 0
+                li a4, 0            # j = 0
         loopj:
-            add a1, sp, a4      # a1 <- rank+j 주소 (j 자체를 4씩 키우자)
-            lw a1, 0(a1)        # a1 <- rank[j] 값
-            beq a3, a1, iupdate # i == rank[j]
+                add a1, sp, a4      # a1 <- rank+j 주소 (j 자체를 4씩 키우자)
+                lw a1, 0(a1)        # a1 <- rank[j] 값
+                beq a3, a1, iupdate # i == rank[j]
 
-            addi a4, a4, 4      # j++
-            li a0, 32
-            bltu a4, a0, loopj   # a0 == 32
+                addi a4, a4, 4      # j++
+                li a0, 32
+                bltu a4, a0, loopj  # a0 == 32
 
-            sw a3, 0(a2)        # rank[n] = i;
-            addi a2, a2, 4      # n++
+                sw a3, 0(a2)        # rank[n] = i;
+                addi a2, a2, 4      # n++
         iupdate:
-            addi a3, a3, 1
-            addi a0, zero, 16
-            bltu a3, a0, loopi
+                addi a3, a3, 1
+                addi a0, zero, 16
+                bltu a3, a0, loopi
         rank_done:
-            lw a0, 92(sp)       # restore a0
-            lw a1, 64(sp)       # restore a1
+                lw a0, 92(sp)       # restore a0
+                lw a1, 64(sp)       # restore a1
         ret
 #--------------------------------------------------------------#
 
@@ -137,13 +144,12 @@ decode:
 #   1. inbytes == 0 : return 0
 #   2. length of output(ret) > outbytes : return -1
 
-# TODO : caller saved reg만 사용하니까 save할 필요 없는거지? -> 내가 callee saved를 안 쓰면 되지.
 
     # handle null string
         li a5, 4
         bltu a5, a1, begin       # 길이 4면 rank만 들어오는거임.
         li a0, 0
-        
+
         ret
 
 
@@ -151,9 +157,9 @@ begin:
         addi sp, sp, -128   # alloc stack
 
         # make empty a2, a3
-        sw a2, 96(sp)       # *outp @feb0
-        sw a3, 68(sp)       # outbytes @feb4
-        sw ra, 72(sp)       # ra @feb8
+        sw a2, 96(sp)           # *outp @feb0
+        sw a3, 68(sp)           # outbytes @feb4
+        sw ra, 72(sp)           # ra @feb8
 
         # handling ranking
         lw a3, 0(a0)            # load rank
@@ -170,7 +176,7 @@ begin:
 
         call convert_endian     # a5에 bigendian 담겨있음.
         li a4, 32               # outregEmptybit = 32로 초기화해놔야함.
-        sw a4, 84(sp)          # 메모리에 저장해놓고 나중에 사용.
+        sw a4, 84(sp)           # 메모리에 저장해놓고 나중에 사용.
 
         # read, handle padding_info
         srli a2, a5, 28         # a2 : padding_info
@@ -179,16 +185,22 @@ begin:
         sub a1, a1, a2          # total_bits_to_read = 길이-paddingbits
         addi a1, a1, -4         #               - info_bits
         li a2, 28
+
 ############## 여기까지 패딩 가공 끝###################
+
+
+
 # a0: token, a1: total_to_read, a2: waiting, a3: loopcnt, a4: temporary, a5: bigendian
+
+
 decoding_loop:
     # 길이 안 맞는것들 handle
         addi a0, zero, 0            # token init : 0
         lui a4, 0x80000
-#752
-L0xxxx:
-        bgeu a5, a4, L1xxxx          # a5 >= 0x80000000
-        call read_data_shift        #msb0
+
+    L0xxxx:
+        bgeu a5, a4, L1xxxx         # a5 >= 0x80000000
+        call read_data_shift        # msb0
 
         li a4, 2
         bltu a2, a4, L0buf0bit
@@ -205,16 +217,16 @@ L0xxxx:
                 li a3, 1
                 call sequential_read
                 call load_data
-                li a3, 1                # loopcnt = 1
+                li a3, 1            # loopcnt = 1
                 jal escapeLoop
 
-L1xxxx:
+    L1xxxx:
         addi a0, a0, 1
         call read_data_shift
         bne a2, zero, L10xxx
         call load_data
 
-L10xxx:
+    L10xxx:
         lui a4, 0x80000
         bgeu a5, a4, L11xxx
         slli a0, a0, 1
@@ -238,7 +250,7 @@ L10xxx:
                 li a3, 1
                 jal escapeLoop
 
-L11xxx:
+    L11xxx:
         slli a0, a0, 1
         addi a0, a0, 1
         call read_data_shift
@@ -271,15 +283,19 @@ L11xxx:
                 jal escapeLoop
 #-----------------------------------------------------#
 
+
+
 escapeLoop:
         call sequential_read
 
 
+
 # 0x80000290
 match_with_rank:
-# a0: token에 들어있는 값으로 매칭시킨다.
-# a3 : outputreg, a4 : 맘껏쓰시오
+        # a0: token에 들어있는 값으로 매칭시킨다.
+        # a3 : outputreg, a4 : 맘껏쓰시오
         lw a3, 88(sp)   # outputreg가 저장돼있는 주소. 처음엔 0이다.
+
         rank0:
             bne a0, zero, rank1
             lw a4, 0(sp)            # rank0의 주소에 가서 로드
@@ -391,45 +407,48 @@ match_with_rank:
             slli a3, a3, 4
             or a3, a3, a4
             jal check_outreg_full
+
+
+
 # 0x80000410
 check_outreg_full:
 # 4bit token하나가 더 추가됐으니 outlen도 더하고, outregEmptybit 도 -4하자.
-        lw a0, 100(sp)       # outlen load
-        addi a0, a0, 1      # outlen ++
+        lw a0, 100(sp)              # outlen load
+        addi a0, a0, 1              # outlen ++
 
-        lw a4, 84(sp)      # outregEmptybit. 시작할 때 32로 초기화 해야함
+        lw a4, 84(sp)               # outregEmptybit. 시작할 때 32로 초기화 해야함
         addi a4, a4, -4
 
+
 noMoreData:
-#799
         bne a1, zero, full_outBuf
-        srli a0, a0, 1          # outlen/2
-        call convert_endian     # 어짜피 끝이니 저장할 것 없음.
+        srli a0, a0, 1              # outlen/2
+        call convert_endian         # 어짜피 끝이니 저장할 것 없음.
 
-        andi a2, a0, 0x3       # outlen의 last 1byte 추출
+        andi a2, a0, 0x3            # outlen의 last 1byte 추출
 
-        beq a2, zero, print     # 마지막 1byte가 0이면 걍 인쇄
-        addi a4, zero, 1        # a4 : 1
-        bne a2, a4, not_mod1    # 길이가 1 남으면 끝 3byte 제거
+        beq a2, zero, print         # 마지막 1byte가 0이면 걍 인쇄
+        addi a4, zero, 1            # a4 : 1
+        bne a2, a4, not_mod1        # 길이가 1 남으면 끝 3byte 제거
         srli a5, a5, 24
-not_mod1:
-        addi a4, zero, 2        # a4 : 2
+    not_mod1:
+        addi a4, zero, 2            # a4 : 2
         bne a2, a4, not_mod2
         srli a5, a5, 16
-not_mod2:
+    not_mod2:
         addi a4, zero, 3
         bne a2, a4, print
         srli a5, a5, 8
-print:
-        lw a3, 96(sp)           # outp addr 읽어옴(이 자리에 바로 쓰면 됨)
-        sw a5, 0(a3)            # 인데 byte align해야함!!!! todo: bytealign
-        beq zero, zero, Exit    # bne로 해놔서 시바.....
+    print:
+        lw a3, 96(sp)               # outp addr 읽어옴(이 자리에 바로 쓰면 됨)
+        sw a5, 0(a3)
+        beq zero, zero, Exit
+
 
 
 #0x80000438
 full_outBuf:
-
-        bne a4, zero, is_InBuf_empty      # outregEmptybit ==0 이면 밑에 수행
+        bne a4, x0, inpBuf_empty    # outregEmptybit ==0 이면 밑에 수행
         sw a5, 80(sp)               # buf에 남아있을 수도 있으니 일단 save
         call convert_endian         # a5에 결과가 담김.
 
@@ -441,12 +460,13 @@ full_outBuf:
         li a4, 32                   # 비웠으니 outregEmptybit = 32로 다시 초기화
         li a3, 0                    # outreg도 0으로 초기화
         sw a3, 88(sp)               # outreg 저장해놓음
-        sw a4, 84(sp)              # outregEmptybit도 저장해놓음.
+        sw a4, 84(sp)               # outregEmptybit도 저장해놓음.
 
         lw a5, 80(sp)               # 저장해놨던 buf 다시 a5에 넣음.
 
-is_InBuf_empty:
-        bne a2, zero, lastBuf      # waiting_for_decoding == 0이면 밑에 수행
+
+inpBuf_empty:
+        bne a2, zero, lastBuf       # waiting_for_decoding == 0이면 밑에 수행
         sw a3, 88(sp)               # 추가함.
         sw a4, 84(sp)
 
@@ -455,32 +475,34 @@ is_InBuf_empty:
         lw a3, 88(sp)
         lw a4, 84(sp)
 
+
 lastBuf:
-        bltu a2, a1, gotoDecodingLoop    # 마지막 loop면 waiting > total일 수도 있음.
-        mv a2, a1           # waiting_for_decoding = total_bits_to_read
+        bltu a2, a1, decodeAgain    # 마지막 loop면 waiting > total일 수도 있음.
+        mv a2, a1                   # waiting_for_decoding = total_bits_to_read
 
 
-gotoDecodingLoop:
-        sw a3, 88(sp)       #outputreg 다 안 찬 상태로 다시 loop돌면 이 값 없어짐.
-        sw a4, 84(sp)      # outregEmptybit도 다시 저장.
-        sw a0, 100(sp)       # outlen도 저장
+decodeAgain:
+        sw a3, 88(sp)               # outputreg 다 안 찬 상태로 다시 loop돌면 이 값 없어짐.
+        sw a4, 84(sp)               # outregEmptybit도 다시 저장.
+        sw a0, 100(sp)              # outlen도 저장
         jal decoding_loop
 
+
 Exit:
-    # restore values
-        lw ra, 72(sp)       # ra to main func - sp를 바꾸기 전에 lw했어야지
-        lw a4, 68(sp)       #outbytes 다시 로드
-        addi sp, sp, 128    # dealloc stack
+        # restore values
+        lw ra, 72(sp)               # ra to main func - sp를 바꾸기 전에 lw했어야지
+        lw a4, 68(sp)               #outbytes 다시 로드
+        addi sp, sp, 128            # dealloc stack
 
-        bgeu a4, a0, return    # outbytes >= outlen -> 걍 return
-        addi a0, zero, -1   # outbytes < outlen -> -1 return
+        bgeu a4, a0, return         # outbytes >= outlen -> 걍 return
+        addi a0, zero, -1           # outbytes < outlen -> -1 return
+
 return:
-
         ret
 
 err:
-    lui a0, 0x01234         #err check
-    jal Exit
+        lui a0, 0x01234             #err check
+        jal Exit
 
 
 
