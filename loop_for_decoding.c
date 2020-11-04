@@ -32,7 +32,7 @@ int bits_in_buf_and_mem = 306;
 
     int i = 0;
     int a5 = 0;
-    int outregEmpty=32;
+    int empty_bits_in_outbuf=32;
     int outlen=0;
     int loopcnt;
     int token = 0;
@@ -166,9 +166,9 @@ seq_read();
 
     outlen ++;
     printf("%d\n", outlen);
-    outregEmpty -= 4;
+    empty_bits_in_outbuf -= 4;
 
-printf("outregEmpty: %d\n", outregEmpty);
+printf("empty_bits_in_outbuf: %d\n", empty_bits_in_outbuf);
 
     if(bits_in_buf_and_mem == 0){
         outlen >>=1;
@@ -177,13 +177,13 @@ printf("outregEmpty: %d\n", outregEmpty);
         if(outlen%4==1){
             puts("3*8<<해서 mem에 쓴다");
         }
-        puts("어짜피 끝이니 outreg, outregEmpty, a5 다 살릴 필요x");
+        puts("어짜피 끝이니 outreg, empty_bits_in_outbuf, a5 다 살릴 필요x");
         return 0;
     }
-    if(outregEmpty == 0){
+    if(empty_bits_in_outbuf == 0){
         puts("a5에 값 남아있을 수도 있으니 sw해놓고 convert한다");
         puts("convert -> store in mem");
-        outregEmpty = 32;
+        empty_bits_in_outbuf = 32;
         puts("outreg도 0으로 reset");
     }
     if(bits_in_inputbuf == 0){
