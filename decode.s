@@ -29,7 +29,6 @@ from_inputbuf_to_token:
         slli a0, a0, 1          # token <<1;
         slli a5, a5, 1          # a5 <<=1;
         addi a2, a2, -1         # bits_in_inputbuf --;
-        addi a1, a1, -1         # bits_should_be_read --;
 
         ret
 
@@ -56,7 +55,6 @@ sequential_read:
 
         dontadd:
             slli a5, a5, 1
-            addi a1, a1, -1     # bits_should_be_read --;
             addi a2, a2, -1     # bits_in_inputbuf --;
             addi a3, a3, -1     # loopcnt --;
             ble a3, zero, exit  # a3 <= 0, ret
@@ -205,12 +203,14 @@ decoding_loop:
         li a4, 2
         bltu a2, a4, L0buf0bit
         li a3, 2                    # loopcnt= 2
+        addi a1, a1, -3
         jal escapeLoop
 
         L0buf0bit:
                 bne a2, zero, L0buf1bit
                 call load_data
                 li a3, 2
+                addi a1, a1, -3
                 jal escapeLoop
 
         L0buf1bit:
@@ -218,6 +218,7 @@ decoding_loop:
                 call sequential_read
                 call load_data
                 li a3, 1            # loopcnt = 1
+                addi a1, a1, -3
                 jal escapeLoop
 
     L1xxxx:
@@ -235,12 +236,14 @@ decoding_loop:
             li a4, 2
             bltu a2, a4, L10buf0bit
             li a3, 2
+            addi a1, a1, -4
             jal escapeLoop
 
             L10buf0bit:
                     bne a2, zero, L10buf1bit
                     call load_data
                     li a3, 2
+                    addi a1, a1, -4
                     jal escapeLoop
 
             L10buf1bit:
@@ -248,6 +251,7 @@ decoding_loop:
                     call sequential_read
                     call load_data
                     li a3, 1
+                    addi a1, a1, -4
                     jal escapeLoop
 
         L11xxx:
@@ -257,6 +261,7 @@ decoding_loop:
             li a4, 3
             bltu a2, a4, L11buf2bit
             li a3, 3
+            addi a1, a1, -5
             jal escapeLoop
 
             L11buf2bit:
@@ -266,12 +271,14 @@ decoding_loop:
                     call sequential_read
                     call load_data
                     li a3, 1
+                    addi a1, a1, -5
                     jal escapeLoop
 
             L11buf0bit:
                     bne a2, zero, L11buf1bit
                     call load_data
                     li a3, 3
+                    addi a1, a1, -5
                     jal escapeLoop
 
             L11buf1bit:
@@ -279,6 +286,7 @@ decoding_loop:
                     call sequential_read
                     call load_data
                     li a3, 2
+                    addi a1, a1, -5
                     jal escapeLoop
 #-----------------------------------------------------#
 
@@ -418,7 +426,7 @@ check_outreg_full:
 # 혹시 outlen 긴 거를 무시하고 계속 메모리에 써서?
         lw a4, 68(sp)               # outbytes 다시 로드
         slli a4, a4, 1              # outlen이 2배 돼있는 상황이니 outbyte를 2배로 해서 비교
-        bltu a4, a0, check_overflow    # outbytes < outlen -> -1 return하러 가자
+        bltu a4, a0, check_overflow # outbytes < outlen -> -1 return하러 가자
 
 no_overflow:
         lw a4, 84(sp)               # empty_bits_in_outbuf. 시작할 때 32로 초기화 해야함
