@@ -95,28 +95,28 @@ store_rank:
         sw a0, 92(sp)           # empty a0
         sw a1, 64(sp)           # empty a1
 
-        srli a4, a5, 28         # rank 0
-        sw a4, 0(sp)
-        slli a4, a5, 4          # rank 1
+        srli a4, a5, 28         # rank 6
+        sw a4, 24(sp)
+        slli a4, a5, 4          # rank 7
         srli a4, a4, 28
-        sw a4, 4(sp)
-        slli a4, a5, 8          # rank 2
-        srli a4, a4, 28
-        sw a4, 8(sp)
-        slli a4, a5, 12         # rank 3
-        srli a4, a4, 28
-        sw a4, 12(sp)
-        slli a4, a5, 16         # rank 4
+        sw a4, 28(sp)
+        slli a4, a5, 8          # rank 4
         srli a4, a4, 28
         sw a4, 16(sp)
-        slli a4, a5, 20         # rank 5
+        slli a4, a5, 12         # rank 5
         srli a4, a4, 28
         sw a4, 20(sp)
-        slli a4, a5, 24         # rank 6
+        slli a4, a5, 16         # rank 2
         srli a4, a4, 28
-        sw a4, 24(sp)
-        andi a4, a5, 0xf        # rank 7
-        sw a4, 28(sp)
+        sw a4, 8(sp)
+        slli a4, a5, 20         # rank 3
+        srli a4, a4, 28
+        sw a4, 12(sp)
+        slli a4, a5, 24         # rank 0
+        srli a4, a4, 28
+        sw a4, 0(sp)
+        andi a4, a5, 0xf        # rank 1
+        sw a4, 4(sp)
 
         # put rank 8-15 in the memory
         # a0, a1, a2, a3, a4 usable
@@ -173,9 +173,8 @@ begin:
         sw ra, 72(sp)           # ra @feb8
 
         # handling ranking
-        lw a3, 0(a0)            # load rank
-        call convert_endian     # bigendian @a5
-        call store_rank
+        lw a5, 0(a0)            # load rank
+        call store_rank         # rank는 굳이 endian convert 필요 없다. 
 
 # a0: inp addr, a1: bits_should_be_read, a5: bigendian
         addi a0, a0, 4          # next input addr
