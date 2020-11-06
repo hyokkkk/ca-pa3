@@ -25,12 +25,34 @@
 #-------------------------------------------------------------------#
 
 
-from_inputbuf_to_token:
-        slli a0, a0, 1          # token <<1;
-        slli a5, a5, 1          # a5 <<=1;
-        addi a2, a2, -1         # bits_in_inputbuf --;
+#from_inputbuf_to_token:
+#        slli a0, a0, 1          # token <<1;
+#        slli a5, a5, 1          # a5 <<=1;
+#        addi a2, a2, -1         # bits_in_inputbuf --;
+#
+#        ret
 
-        ret
+
+
+#0x80000034
+#sequential_read:
+#        lui a4, 0x80000
+#
+#
+#            slli a0, a0, 1      # token <<1
+#            bltu a5, a4, dontadd
+#            addi a0, a0, 1      # msb 1이면 token에 더해줌
+#
+#        dontadd:
+#            slli a5, a5, 1
+#            addi a2, a2, -1     # bits_in_inputbuf --;
+#            addi a3, a3, -1     # loopcnt --;
+#            ble a3, zero, exit  # a3 <= 0, ret
+#            beq x0, x0, read
+#
+#        exit:
+#            ret
+
 
 load_data:
         lw a4, 92(sp)
@@ -38,30 +60,20 @@ load_data:
         li a2, 32               # bits_in_inputbuf = 32로 초기화
         addi a4, a4, 4          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
         sw a4, 92(sp)           # inp addr 다시 저장
-        sw ra, 76(sp)
-        call convert_endian
-        lw ra, 76(sp)           # begin으로 돌아갈 ra
+
+# convert_endian 하드코딩
+        srli a4, a3, 24         # abxxxxxx -> 000000ab
+        slli a5, a3, 24         # xxxxxxgh -> gh000000
+        or a5, a4, a5           # gh0000ab
+        srli a4, a3, 16         # abcdefgh -> 0000abcd
+        andi a4, a4, 0xff       # 000000cd
+        slli a4, a4, 8          # 0000cd00
+        or a5, a5, a4           # gh00cdab
+        srli a4, a3, 8          # abcdefgh -> 00abcdef
+        slli a4, a4, 24         # ef000000
+        srli a4, a4, 8          # 00ef0000
+        or a5, a5, a4           # ghefcdab
         ret
-
-
-#0x80000034
-sequential_read:
-        lui a4, 0x80000
-
-        read:
-            slli a0, a0, 1      # token <<1
-            bltu a5, a4, dontadd
-            addi a0, a0, 1      # msb 1이면 token에 더해줌
-
-        dontadd:
-            slli a5, a5, 1
-            addi a2, a2, -1     # bits_in_inputbuf --;
-            addi a3, a3, -1     # loopcnt --;
-            ble a3, zero, exit  # a3 <= 0, ret
-            beq x0, x0, read
-
-        exit:
-            ret
 
 
 convert_endian:                 # (in, out) = (a3, a5) / use a3, a4, a5
@@ -163,7 +175,6 @@ begin:
         # handling ranking
         lw a3, 0(a0)            # load rank
         call convert_endian     # bigendian @a5
-        addi a1, a1, -4         # load한 걸 처리했으니 길이 -4byte
         call store_rank
 
 # a0: inp addr, a1: bits_should_be_read, a5: bigendian
@@ -180,15 +191,18 @@ begin:
         srli a2, a5, 28         # a2 : padding_info
         slli a1, a1, 3          # 길이를 bit기준으로 바꿈.
         slli a5, a5, 4          # remove padding_info
-        sub a1, a1, a2          # bits_should_be_read = 길이-paddingbits
-        addi a1, a1, -4         #               - info_bits
+        sub a1, a1, a2          # bits_should_be_read = 전체길이 - rank32bit
+        addi a1, a1, -36         #               - info_bits - padding_bits
         li a2, 28
+
+
+
 
 ############## 여기까지 패딩 가공 끝###################
 
-
-
 # a0: token, a1: total_to_read, a2: waiting, a3: loopcnt, a4: temporary, a5: bigendian
+# 원래 function으로 만들어놨던 sequential_read, from_inputbuf_to_token 를 그냥 하드코딩으로 함. 불필요한 instruction 줄이기 위해
+
 
 
 decoding_loop:
@@ -198,106 +212,289 @@ decoding_loop:
 
     L0xxxx:
         bgeu a5, a4, L1xxxx         # a5 >= 0x80000000
-        call from_inputbuf_to_token        # msb0
 
-        li a4, 2
-        bltu a2, a4, L0buf0bit
-        li a3, 2                    # loopcnt= 2
-        addi a1, a1, -3
-        jal escapeLoop
+        #from_inputbuf_to_token
+        slli a0, a0, 1          # token <<1;
+        slli a5, a5, 1          # a5 <<=1;
+        addi a2, a2, -1         # bits_in_inputbuf --;
+
+        li a3, 2
+        bltu a2, a3, L0buf0bit
+        addi a1, a1, -3             # bits_should_be_read -3
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd0
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd0:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd1
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd1:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+        jal match_with_rank
 
         L0buf0bit:
                 bne a2, zero, L0buf1bit
                 call load_data
-                li a3, 2
+                lui a4, 0x80000
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd02
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd02:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd2
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd2:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                 addi a1, a1, -3
-                jal escapeLoop
+                jal match_with_rank
 
         L0buf1bit:
-                li a3, 1
-                call sequential_read
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd3
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd3:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                 call load_data
-                li a3, 1            # loopcnt = 1
+                lui a4, 0x80000
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd4
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd4:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                 addi a1, a1, -3
-                jal escapeLoop
+                jal match_with_rank
 
     L1xxxx:
-        call from_inputbuf_to_token
+        lui a4, 0x80000
+        #from_inputbuf_to_token
+        slli a0, a0, 1          # token <<1;
+        slli a5, a5, 1          # a5 <<=1;
+        addi a2, a2, -1         # bits_in_inputbuf --;
+
         addi a0, a0, 1
 
         bne a2, zero, L10xxx
         call load_data
+        lui a4, 0x80000
 
         L10xxx:
-            lui a4, 0x80000
             bgeu a5, a4, L11xxx
-            call from_inputbuf_to_token
 
-            li a4, 2
-            bltu a2, a4, L10buf0bit
+            #from_inputbuf_to_token
+            slli a0, a0, 1          # token <<1;
+            slli a5, a5, 1          # a5 <<=1;
+            addi a2, a2, -1         # bits_in_inputbuf --;
+
             li a3, 2
+            bltu a2, a3, L10buf0bit
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd5
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd5:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd6
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd6:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
             addi a1, a1, -4
-            jal escapeLoop
+            jal match_with_rank
 
             L10buf0bit:
                     bne a2, zero, L10buf1bit
                     call load_data
-                    li a3, 2
+                    lui a4, 0x80000
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd8
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd8:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd9
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd9:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                     addi a1, a1, -4
-                    jal escapeLoop
+                    jal match_with_rank
 
             L10buf1bit:
-                    li a3, 1
-                    call sequential_read
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd10
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd10:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                     call load_data
-                    li a3, 1
+                    lui a4, 0x80000
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd11
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd11:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                     addi a1, a1, -4
-                    jal escapeLoop
+                    jal match_with_rank
 
         L11xxx:
-            call from_inputbuf_to_token
+        #from_inputbuf_to_token
+        slli a0, a0, 1          # token <<1;
+        slli a5, a5, 1          # a5 <<=1;
+        addi a2, a2, -1         # bits_in_inputbuf --;
+
             addi a0, a0, 1
 
-            li a4, 3
-            bltu a2, a4, L11buf2bit
             li a3, 3
+            bltu a2, a3, L11buf2bit
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd12
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd12:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd13
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd13:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd14
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd14:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
             addi a1, a1, -5
-            jal escapeLoop
+            jal match_with_rank
 
             L11buf2bit:
-                    li a4, 2
-                    bne a2, a4, L11buf0bit
                     li a3, 2
-                    call sequential_read
+                    bne a2, a3, L11buf0bit
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd15
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd15:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd16
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd16:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
                     call load_data
-                    li a3, 1
+                    lui a4, 0x80000
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd18
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd18:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                     addi a1, a1, -5
-                    jal escapeLoop
+                    jal match_with_rank
 
             L11buf0bit:
                     bne a2, zero, L11buf1bit
                     call load_data
-                    li a3, 3
+                    lui a4, 0x80000
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd19
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd19:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd20
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd20:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd21
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd21:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                     addi a1, a1, -5
-                    jal escapeLoop
+                    jal match_with_rank
 
             L11buf1bit:
-                    li a3, 1
-                    call sequential_read
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd22
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd22:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                     call load_data
-                    li a3, 2
+                    lui a4, 0x80000
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd23
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd23:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
+
+
+                                    slli a0, a0, 1      # token <<1
+                                    bltu a5, a4, dontadd24
+                                    addi a0, a0, 1      # msb 1이면 token에 더해줌
+                                dontadd24:
+                                    slli a5, a5, 1
+                                    addi a2, a2, -1     # bits_in_inputbuf --;
                     addi a1, a1, -5
-                    jal escapeLoop
+                    jal match_with_rank
 #-----------------------------------------------------#
 
 
 
-escapeLoop:
-        call sequential_read
 
 
 
-# 0x80000290
 match_with_rank:
         # a0: token에 들어있는 값으로 매칭시킨다.
         # a3 : outputreg, a4 : 맘껏쓰시오
@@ -417,7 +614,6 @@ match_with_rank:
 
 
 
-# 0x80000410
 check_outreg_full:
 # 4bit token하나가 더 추가됐으니 outlen도 더하고, empty_bits_in_outbuf 도 -4하자.
         lw a0, 100(sp)              # outlen load
@@ -503,7 +699,7 @@ decodeAgain:
 Exit:
         # restore values
         lw ra, 72(sp)               # ra to main func - sp를 바꾸기 전에 lw했어야지
-        lw a4, 68(sp)               #outbytes 다시 로드
+        lw a4, 68(sp)               # outbytes 다시 로드
         addi sp, sp, 128            # dealloc stack
 
 check_overflow:
