@@ -14,6 +14,10 @@
 > 매 실행마다 특정 reg와 mem만 추적하기 위해 Makefile 6단계로 해놓고 .py수정해서 사용함.
 
 
+> $ riscv32-unknown-elf-objdump -D decode > decode.objdump              
+> 이거하면 pc 명령 볼 수 있음.
+
+
 ## Introduction
 
 The goal of this project is to give you an opportunity to practice RISC-V assembly programming. In addition, this project introduces various RISC-V tools that help you compile and run your RISC-V programs.
