@@ -248,7 +248,6 @@ decoding_loop:
 
 
     msb1: # 일단 msb 처리해야 함. msb가 마지막 bit일 수도 있으니
-        addi a0, a0, 1                                  # 일단 msb == 1 이니 token에 담아놓기
         slli a5, a5, 1                                  # 읽었으니 a5 << 1
         addi a2, a2, -1                                 # bits_inbuf -1
 
@@ -289,7 +288,7 @@ decoding_loop:
         lui a3, 0xe0000                                 # and 할 거 준비
         and a3, a3, a5                                  # msb 3bit a3에 담음
         srli a3, a3, 29                                 # a3 >> 29
-        slli a0, a0, 3                                  # token << 3
+        addi a0, a0, 8                                  # token: 1000
         or a0, a0, a3
 
         slli a5, a5, 3                                  # a5 << 3
@@ -328,7 +327,7 @@ decoding_loop:
                 lui a3, 0xc0000
                 and a3, a3, a5                          # msb 2bit a3에 담음
                 srli a3, a3, 30                         # token 3bit msb 0
-                slli a0, a0, 3                          # token << 3
+                addi a0, a0, 8                          # token : 1000
                 or a0, a0, a3                           # token complete
 
                 slli a5, a5, 2                          # 읽었으니 <<2
@@ -340,7 +339,7 @@ decoding_loop:
                 lui a3, 0xc0000
                 and a3, a3, a5                          # msb 2bit a3에 담음
                 srli a3, a3, 29                         # 이따 읽는 1bit가 0이면 가만히 있고 1이면 1더해
-                slli a0, a0, 3                          # token << 3 (미리 shift해놓음)
+                addi a0, a0, 8                          # token : 1000
                 or a0, a0, a3
 
                 # load_data 하드코딩
@@ -385,7 +384,7 @@ decoding_loop:
                 lui a4, 0xf0000
                 and a4, a4, a5                          # msb 4bit a4에 담음
                 srli a4, a4, 28                         # a4 >> 28
-                slli a0, a0, 4                          # token << 4
+                addi a0, a0, 16                         # token : 10000
                 or a0, a0, a4                           # token complete
 
                 slli a5, a5, 4                          # 읽었으니 << 4
@@ -401,7 +400,7 @@ decoding_loop:
                         lui a4, 0xe0000
                         and a4, a4, a5                  # msb 3bit a4에 담음
                         srli a4, a4, 28                 # a4 >> 28 (1bit 읽는게 1이면 더하고 0이면 냅둬)
-                        slli a0, a0, 4                  # token << 4
+                        addi a0, a0, 16
                         or a0, a0, a4                   # lsb 제외 token complete
 
                         # load_data 하드코딩
@@ -439,9 +438,7 @@ decoding_loop:
                 _1bitleft:
                         li a3, 1                        # 1bit 남아있던거면 이게 0 되지
                         bne a2, a3, _2bitsleft
-
-                        addi a0, a0, 2                  # 1이라는 건 자명함 (token 11)
-                        slli a0, a0, 3                  # 미리 shift해놓음. __11xxx
+                        addi a0, a0, 0x18               # token : 11000
 
                         # load_data 하드코딩
                         lw a4, 92(sp)
