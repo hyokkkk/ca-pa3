@@ -108,7 +108,7 @@ begin:
 
         # handling ranking
         lw a5, 0(a0)                                    # load rank
-        call store_rank                                 # rank는 굳이 endian convert 필요 없다. 
+        call store_rank                                 # rank는 굳이 endian convert 필요 없다.
 
 # a0: inp addr, a1: bits_should_be_read, a5: bigendian
         addi a0, a0, 4                                  # next input addr
@@ -120,13 +120,14 @@ begin:
         srli a4, a3, 24                                 # abxxxxxx -> 000000ab
         slli a5, a3, 24                                 # xxxxxxgh -> gh000000
         or a5, a4, a5                                   # gh0000ab
-        srli a4, a3, 16                                 # abcdefgh -> 0000abcd
-        andi a4, a4, 0xff                               # 000000cd
-        slli a4, a4, 8                                  # 0000cd00
+
+        lui a2, 0x00ff0
+        and a4, a3, a2                                  # cd 추출
+        srli a4, a4, 8                                  # cd >>
         or a5, a5, a4                                   # gh00cdab
-        srli a4, a3, 8                                  # abcdefgh -> 00abcdef
-        slli a4, a4, 24                                 # ef000000
-        srli a4, a4, 8                                  # 00ef0000
+
+        slli a3, a3, 8
+        and a4, a3, a2
         or a5, a5, a4                                   # ghefcdab
 
 
@@ -192,7 +193,6 @@ decoding_loop:
                 # load_data 하드코딩
                 lw a4, 92(sp)
                 lw a3, 0(a4)                            # a3에 data load받음
-                li a2, 32                               # bits_in_inputbuf = 32로 초기화
                 addi a4, a4, 4                          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
                 sw a4, 92(sp)                           # inp addr 다시 저장
 
@@ -200,17 +200,19 @@ decoding_loop:
                 srli a4, a3, 24                         # abxxxxxx -> 000000ab
                 slli a5, a3, 24                         # xxxxxxgh -> gh000000
                 or a5, a4, a5                           # gh0000ab
-                srli a4, a3, 16                         # abcdefgh -> 0000abcd
-                andi a4, a4, 0xff                       # 000000cd
-                slli a4, a4, 8                          # 0000cd00
+
+                lui a2, 0x00ff0
+                and a4, a3, a2                          # cd 추출
+                srli a4, a4, 8                          # cd >>
                 or a5, a5, a4                           # gh00cdab
-                srli a4, a3, 8                          # abcdefgh -> 00abcdef
-                slli a4, a4, 24                         # ef000000
-                srli a4, a4, 8                          # 00ef0000
+
+                slli a3, a3, 8
+                and a4, a3, a2
                 or a5, a5, a4                           # ghefcdab
 
+                li a2, 32                               # bits_in_inputbuf = 32로 초기화
                 lui a4, 0x80000
-                
+
                 # sequential_read
                 slli a0, a0, 1                          # token <<1
                 bltu a5, a4, dontadd02
@@ -242,7 +244,6 @@ decoding_loop:
                 # load_data 하드코딩
                 lw a4, 92(sp)
                 lw a3, 0(a4)                            # a3에 data load받음
-                li a2, 32                               # bits_in_inputbuf = 32로 초기화
                 addi a4, a4, 4                          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
                 sw a4, 92(sp)                           # inp addr 다시 저장
 
@@ -250,15 +251,16 @@ decoding_loop:
                 srli a4, a3, 24                         # abxxxxxx -> 000000ab
                 slli a5, a3, 24                         # xxxxxxgh -> gh000000
                 or a5, a4, a5                           # gh0000ab
-                srli a4, a3, 16                         # abcdefgh -> 0000abcd
-                andi a4, a4, 0xff                       # 000000cd
-                slli a4, a4, 8                          # 0000cd00
+                lui a2, 0x00ff0
+                and a4, a3, a2                          # cd 추출
+                srli a4, a4, 8                          # cd >>
                 or a5, a5, a4                           # gh00cdab
-                srli a4, a3, 8                          # abcdefgh -> 00abcdef
-                slli a4, a4, 24                         # ef000000
-                srli a4, a4, 8                          # 00ef0000
+
+                slli a3, a3, 8
+                and a4, a3, a2
                 or a5, a5, a4                           # ghefcdab
 
+                li a2, 32                               # bits_in_inputbuf = 32로 초기화
                 lui a4, 0x80000
 
                 # sequential_read
@@ -286,7 +288,6 @@ decoding_loop:
         # load_data 하드코딩
         lw a4, 92(sp)
         lw a3, 0(a4)                                    # a3에 data load받음
-        li a2, 32                                       # bits_in_inputbuf = 32로 초기화
         addi a4, a4, 4                                  # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
         sw a4, 92(sp)                                   # inp addr 다시 저장
 
@@ -294,15 +295,17 @@ decoding_loop:
         srli a4, a3, 24                                 # abxxxxxx -> 000000ab
         slli a5, a3, 24                                 # xxxxxxgh -> gh000000
         or a5, a4, a5                                   # gh0000ab
-        srli a4, a3, 16                                 # abcdefgh -> 0000abcd
-        andi a4, a4, 0xff                               # 000000cd
-        slli a4, a4, 8                                  # 0000cd00
+
+        lui a2, 0x00ff0
+        and a4, a3, a2                                  # cd 추출
+        srli a4, a4, 8                                  # cd >>
         or a5, a5, a4                                   # gh00cdab
-        srli a4, a3, 8                                  # abcdefgh -> 00abcdef
-        slli a4, a4, 24                                 # ef000000
-        srli a4, a4, 8                                  # 00ef0000
+
+        slli a3, a3, 8
+        and a4, a3, a2
         or a5, a5, a4                                   # ghefcdab
 
+        li a2, 32                                       # bits_in_inputbuf = 32로 초기화
         lui a4, 0x80000
 
 
@@ -343,7 +346,6 @@ decoding_loop:
                         # load_data 하드코딩
                         lw a4, 92(sp)
                         lw a3, 0(a4)                    # a3에 data load받음
-                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
                         addi a4, a4, 4                  # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
                         sw a4, 92(sp)                   # inp addr 다시 저장
 
@@ -351,16 +353,17 @@ decoding_loop:
                         srli a4, a3, 24                 # abxxxxxx -> 000000ab
                         slli a5, a3, 24                 # xxxxxxgh -> gh000000
                         or a5, a4, a5                   # gh0000ab
-                        srli a4, a3, 16                 # abcdefgh -> 0000abcd
-                        andi a4, a4, 0xff               # 000000cd
-                        slli a4, a4, 8                  # 0000cd00
+
+                        lui a2, 0x00ff0
+                        and a4, a3, a2                  # cd 추출
+                        srli a4, a4, 8                  # cd >>
                         or a5, a5, a4                   # gh00cdab
-                        srli a4, a3, 8                  # abcdefgh -> 00abcdef
-                        slli a4, a4, 24                 # ef000000
-                        srli a4, a4, 8                  # 00ef0000
+
+                        slli a3, a3, 8
+                        and a4, a3, a2
                         or a5, a5, a4                   # ghefcdab
 
-
+                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
                         lui a4, 0x80000
 
                         # sequential_read
@@ -394,7 +397,6 @@ decoding_loop:
                 # load_data 하드코딩
                 lw a4, 92(sp)
                 lw a3, 0(a4)                            # a3에 data load받음
-                li a2, 32                               # bits_in_inputbuf = 32로 초기화
                 addi a4, a4, 4                          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
                 sw a4, 92(sp)                           # inp addr 다시 저장
 
@@ -402,14 +404,16 @@ decoding_loop:
                 srli a4, a3, 24                         # abxxxxxx -> 000000ab
                 slli a5, a3, 24                         # xxxxxxgh -> gh000000
                 or a5, a4, a5                           # gh0000ab
-                srli a4, a3, 16                         # abcdefgh -> 0000abcd
-                andi a4, a4, 0xff                       # 000000cd
-                slli a4, a4, 8                          # 0000cd00
+                lui a2, 0x00ff0
+                and a4, a3, a2                          # cd 추출
+                srli a4, a4, 8                          # cd >>
                 or a5, a5, a4                           # gh00cdab
-                srli a4, a3, 8                          # abcdefgh -> 00abcdef
-                slli a4, a4, 24                         # ef000000
-                srli a4, a4, 8                          # 00ef0000
+
+                slli a3, a3, 8
+                and a4, a3, a2
                 or a5, a5, a4                           # ghefcdab
+
+                li a2, 32                               # bits_in_inputbuf = 32로 초기화
 
 
                 lui a4, 0x80000
@@ -485,7 +489,6 @@ decoding_loop:
                         # load_data 하드코딩
                         lw a4, 92(sp)
                         lw a3, 0(a4)                    # a3에 data load받음
-                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
                         addi a4, a4, 4                  # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
                         sw a4, 92(sp)                   # inp addr 다시 저장
 
@@ -493,15 +496,16 @@ decoding_loop:
                         srli a4, a3, 24                 # abxxxxxx -> 000000ab
                         slli a5, a3, 24                 # xxxxxxgh -> gh000000
                         or a5, a4, a5                   # gh0000ab
-                        srli a4, a3, 16                 # abcdefgh -> 0000abcd
-                        andi a4, a4, 0xff               # 000000cd
-                        slli a4, a4, 8                  # 0000cd00
+                        lui a2, 0x00ff0
+                        and a4, a3, a2                  # cd 추출
+                        srli a4, a4, 8                  # cd >>
                         or a5, a5, a4                   # gh00cdab
-                        srli a4, a3, 8                  # abcdefgh -> 00abcdef
-                        slli a4, a4, 24                 # ef000000
-                        srli a4, a4, 8                  # 00ef0000
+
+                        slli a3, a3, 8
+                        and a4, a3, a2
                         or a5, a5, a4                   # ghefcdab
 
+                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
 
                         lui a4, 0x80000
 
@@ -522,7 +526,6 @@ decoding_loop:
                         # load_data 하드코딩
                         lw a4, 92(sp)
                         lw a3, 0(a4)                    # a3에 data load받음
-                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
                         addi a4, a4, 4                  # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
                         sw a4, 92(sp)                   # inp addr 다시 저장
 
@@ -530,15 +533,17 @@ decoding_loop:
                         srli a4, a3, 24                 # abxxxxxx -> 000000ab
                         slli a5, a3, 24                 # xxxxxxgh -> gh000000
                         or a5, a4, a5                   # gh0000ab
-                        srli a4, a3, 16                 # abcdefgh -> 0000abcd
-                        andi a4, a4, 0xff               # 000000cd
-                        slli a4, a4, 8                  # 0000cd00
+
+                        lui a2, 0x00ff0
+                        and a4, a3, a2                  # cd 추출
+                        srli a4, a4, 8                  # cd >>
                         or a5, a5, a4                   # gh00cdab
-                        srli a4, a3, 8                  # abcdefgh -> 00abcdef
-                        slli a4, a4, 24                 # ef000000
-                        srli a4, a4, 8                  # 00ef0000
+
+                        slli a3, a3, 8
+                        and a4, a3, a2
                         or a5, a5, a4                   # ghefcdab
 
+                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
                         lui a4, 0x80000
 
                         # sequential_read
@@ -580,7 +585,6 @@ decoding_loop:
                         # load_data 하드코딩
                         lw a4, 92(sp)
                         lw a3, 0(a4)                    # a3에 data load받음
-                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
                         addi a4, a4, 4                  # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
                         sw a4, 92(sp)                   # inp addr 다시 저장
 
@@ -588,15 +592,17 @@ decoding_loop:
                         srli a4, a3, 24                 # abxxxxxx -> 000000ab
                         slli a5, a3, 24                 # xxxxxxgh -> gh000000
                         or a5, a4, a5                   # gh0000ab
-                        srli a4, a3, 16                 # abcdefgh -> 0000abcd
-                        andi a4, a4, 0xff               # 000000cd
-                        slli a4, a4, 8                  # 0000cd00
+
+                        lui a2, 0x00ff0
+                        and a4, a3, a2                  # cd 추출
+                        srli a4, a4, 8                  # cd >>
                         or a5, a5, a4                   # gh00cdab
-                        srli a4, a3, 8                  # abcdefgh -> 00abcdef
-                        slli a4, a4, 24                 # ef000000
-                        srli a4, a4, 8                  # 00ef0000
+
+                        slli a3, a3, 8
+                        and a4, a3, a2
                         or a5, a5, a4                   # ghefcdab
 
+                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
                         lui a4, 0x80000
 
                         #sequential_read
@@ -756,18 +762,19 @@ no_overflow:
 noMoreData:
         bne a1, zero, full_outBuf
         srli a0, a0, 1                      # outlen/2
-        
+
         # convert_endian                    # 어짜피 끝이니 저장할 것 없음.
         srli a4, a3, 24                     # abxxxxxx -> 000000ab
         slli a5, a3, 24                     # xxxxxxgh -> gh000000
         or a5, a4, a5                       # gh0000ab
-        srli a4, a3, 16                     # abcdefgh -> 0000abcd
-        andi a4, a4, 0xff                   # 000000cd
-        slli a4, a4, 8                      # 0000cd00
+
+        lui a2, 0x00ff0
+        and a4, a3, a2                      # cd 추출
+        srli a4, a4, 8                      # cd >>
         or a5, a5, a4                       # gh00cdab
-        srli a4, a3, 8                      # abcdefgh -> 00abcdef
-        slli a4, a4, 24                     # ef000000
-        srli a4, a4, 8                      # 00ef0000
+
+        slli a3, a3, 8
+        and a4, a3, a2
         or a5, a5, a4                       # ghefcdab
 
         andi a2, a0, 0x3                    # outlen의 last 1byte 추출
@@ -795,7 +802,7 @@ full_outBuf:
         bne a4, x0, inpBuf_empty            # empty_bits_in_outbuf ==0 이면 밑에 수행
         sw a5, 80(sp)                       # buf에 남아있을 수도 있으니 일단 save
 
-        # convert_endian 
+        # convert_endian
         srli a4, a3, 24                     # abxxxxxx -> 000000ab
         slli a5, a3, 24                     # xxxxxxgh -> gh000000
         or a5, a4, a5                       # gh0000ab
@@ -829,7 +836,6 @@ inpBuf_empty:
         # load_data 하드코딩
         lw a4, 92(sp)
         lw a3, 0(a4)                        # a3에 data load받음
-        li a2, 32                           # bits_in_inputbuf = 32로 초기화
         addi a4, a4, 4                      # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
         sw a4, 92(sp)                       # inp addr 다시 저장
 
@@ -837,15 +843,17 @@ inpBuf_empty:
         srli a4, a3, 24                     # abxxxxxx -> 000000ab
         slli a5, a3, 24                     # xxxxxxgh -> gh000000
         or a5, a4, a5                       # gh0000ab
-        srli a4, a3, 16                     # abcdefgh -> 0000abcd
-        andi a4, a4, 0xff                   # 000000cd
-        slli a4, a4, 8                      # 0000cd00
+
+        lui a2, 0x00ff0
+        and a4, a3, a2                      # cd 추출
+        srli a4, a4, 8                      # cd >>
         or a5, a5, a4                       # gh00cdab
-        srli a4, a3, 8                      # abcdefgh -> 00abcdef
-        slli a4, a4, 24                     # ef000000
-        srli a4, a4, 8                      # 00ef0000
+
+        slli a3, a3, 8
+        and a4, a3, a2
         or a5, a5, a4                       # ghefcdab
 
+        li a2, 32                           # bits_in_inputbuf = 32로 초기화
         lw a3, 88(sp)
         lw a4, 84(sp)
 
