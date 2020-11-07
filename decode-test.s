@@ -20,31 +20,31 @@
 
 	.globl	test
 test:
-	.word	test0
-	.word	test1
-	.word	test2
-	.word	test3
 	.word	test4
+	.word	test0
 	.word	test5
+	.word	test3
+	.word	test2
+	.word	test1
 #       .word   test10
 
 	.globl	ans
 ans:
-	.word	ans0
-	.word	ans1
-	.word	ans2
-	.word	ans3
 	.word	ans4
+	.word	ans0
 	.word	ans5
+	.word	ans3
+	.word	ans2
+	.word	ans1
 #.word   ans10
 
 #self-made
 
-test10:
-        .word   0x00000000      #inbytes==0, return 0
-ans10:
-        .word   0x00000000
-        .word   0x00000000
+#test10:
+#        .word   0x00000000      #inbytes==0, return 0
+#ans10:
+#        .word   0x00000000
+#        .word   0x00000000
 
 test0:
 	.word	0x00000007      #inbytes
