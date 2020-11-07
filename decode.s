@@ -248,7 +248,7 @@ decoding_loop:
 
 
     msb1: # 일단 msb 처리해야 함. msb가 마지막 bit일 수도 있으니
-        addi a0, zero, 1                                  # 일단 msb == 1 이니 token에 담아놓기
+        addi a0, a0, 1                                  # 일단 msb == 1 이니 token에 담아놓기
         slli a5, a5, 1                                  # 읽었으니 a5 << 1
         addi a2, a2, -1                                 # bits_inbuf -1
 
@@ -282,7 +282,7 @@ decoding_loop:
         bgeu a5, a4, _11xxx                             # next bit == 1이면 _11xxx로 가
 
         # tokenizing _10xx
-        li a3, 3                                       # bits_in_inbuf 비교할 준비
+        li a3, 3                                        # bits_in_inbuf 비교할 준비
         bltu a2, a3, _10xx1bit                          # 3bit보다 적게 남았으면 1bit으로 가라
 
         # read 3bits
@@ -299,8 +299,8 @@ decoding_loop:
         jal match_with_rank
 
         _10xx1bit:
-                addi a2, a2, -1                         # 1bit 남아있던거면 이게 0 되지
-                bne a2, zero, _10xx2bits
+                li a3, 1
+                bne a2, a3, _10xx2bits
 
                 # load_data 하드코딩
                 lw a4, 92(sp)
@@ -379,7 +379,7 @@ decoding_loop:
         # tokenizing _11xxx -> should read 4bits more
         _11xxx:
                 li a3, 4                                # bits_in_inbuf 판단하기 위해
-                bltu a2, a3, _3bitsleft                  # 4bit보다 적게 남았으면 _3bitsleft로 가
+                bltu a2, a3, _3bitsleft                 # 4bit보다 적게 남았으면 _3bitsleft로 가
 
                 # read 4bits
                 lui a4, 0xf0000
@@ -437,10 +437,10 @@ decoding_loop:
                         jal match_with_rank
 
                 _1bitleft:
-                        addi a2, a2, -1                 # 1bit 남아있던거면 이게 0 되지
-                        bne a2, zero, _2bitsleft
+                        li a3, 1                        # 1bit 남아있던거면 이게 0 되지
+                        bne a2, a3, _2bitsleft
 
-                        addi a0, a0, 2              # 1이라는 건 자명함 (token 11)
+                        addi a0, a0, 2                  # 1이라는 건 자명함 (token 11)
                         slli a0, a0, 3                  # 미리 shift해놓음. __11xxx
 
                         # load_data 하드코딩
@@ -464,7 +464,7 @@ decoding_loop:
                         or a5, a5, a4                   # ghefcdab
 
                         li a2, 32                       # bits_in_inputbuf = 32로 초기화
-                        lui a4, 0x80000
+                    
 
                         # read 3bits
                         lui a4, 0xe0000
@@ -481,42 +481,42 @@ decoding_loop:
                 _2bitsleft:
                         # read 2bits
                         lui a3, 0xc0000
-                        and a3, a3, a5                          # msb 2bit a3에 담음
+                        and a3, a3, a5                  # msb 2bit a3에 담음
                         srli a3, a3, 30
-                        addi a0, a3, 8                      # 3bit token (need 2bit more)
-                        slli a0, a0, 2                          # 미리 shift 해놓음
+                        addi a0, a3, 4                  # 3bit token (need 2bit more) 야이띨빡아여기가문제엿어!!!!! 으아아아아앙아아아ㅏㅇ아앙 왜 8을 더했니... 0b100이 8이냐고 ㅠㅠㅠ
+                        slli a0, a0, 2                  # 미리 shift 해놓음
 
                         # load_data 하드코딩
                         lw a4, 92(sp)
-                        lw a3, 0(a4)                            # a3에 data load받음
-                        addi a4, a4, 4                          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
-                        sw a4, 92(sp)                           # inp addr 다시 저장
+                        lw a3, 0(a4)                    # a3에 data load받음
+                        addi a4, a4, 4                  # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
+                        sw a4, 92(sp)                   # inp addr 다시 저장
 
                         # convert_endian 하드코딩
-                        srli a4, a3, 24                         # abxxxxxx -> 000000ab
-                        slli a5, a3, 24                         # xxxxxxgh -> gh000000
-                        or a5, a4, a5                           # gh0000ab
+                        srli a4, a3, 24                 # abxxxxxx -> 000000ab
+                        slli a5, a3, 24                 # xxxxxxgh -> gh000000
+                        or a5, a4, a5                   # gh0000ab
 
                         lui a2, 0x00ff0
-                        and a4, a3, a2                          # cd 추출
-                        srli a4, a4, 8                          # cd >>
-                        or a5, a5, a4                           # gh00cdab
+                        and a4, a3, a2                  # cd 추출
+                        srli a4, a4, 8                  # cd >>
+                        or a5, a5, a4                   # gh00cdab
 
                         slli a3, a3, 8
                         and a4, a3, a2
-                        or a5, a5, a4                           # ghefcdab
+                        or a5, a5, a4                   # ghefcdab
 
-                        li a2, 32                               # bits_in_inputbuf = 32로 초기화
+                        li a2, 32                       # bits_in_inputbuf = 32로 초기화
 
                         # read 2bits
                         lui a3, 0xc0000
-                        and a3, a3, a5                          # msb 2bit a3에 담음
+                        and a3, a3, a5                  # msb 2bit a3에 담음
                         srli a3, a3, 30
-                        or a0, a0, a3                           # token complete
+                        or a0, a0, a3                   # token complete
 
-                        slli a5, a5, 2                          # 읽었으니 <<2
-                        addi a2, a2, -2                         # bits_in_inbuf -2
-                        addi a1, a1, -5                         # should_be_read -5
+                        slli a5, a5, 2                  # 읽었으니 <<2
+                        addi a2, a2, -2                 # bits_in_inbuf -2
+                        addi a1, a1, -5                 # should_be_read -5
                         jal match_with_rank
 
 
