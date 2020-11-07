@@ -147,7 +147,7 @@ begin:
 
 ############## 여기까지 패딩 가공 끝###################
 
-# a0: token, a1: total_to_read, a2: waiting, a3: loopcnt, a4: temporary, a5: bigendian
+# a0: token, a1: total_to_read, a2: in inputbuf, a3: - , a4: temporary, a5: bigendian
 # 원래 function으로 만들어놨던 sequential_read, from_inputbuf_to_token 를 그냥 하드코딩으로 함. 불필요한 instruction 줄이기 위해
 
 
@@ -155,91 +155,64 @@ begin:
 decoding_loop:
         # 길이 안 맞는것들 handle
         addi a0, zero, 0                                # token init : 0
-        lui a4, 0x80000
+        lui a4, 0x80000                                 # a4 = msb 판별기
 
     L0xxxx:
         bgeu a5, a4, L1xxxx                             # a5 >= 0x80000000
+        li a3, 3                                        # bits_in_inbuf 판단하기 위해
+        bltu a2, a3, only1bit                           # 3bit보다 적게 남았으면 1bit으로 가라
 
-        # from_inputbuf_to_token
-        slli a0, a0, 1                                  # token <<1;
-        slli a5, a5, 1                                  # a5 <<=1;
-        addi a2, a2, -1                                 # bits_in_inputbuf --;
+        more3bits:
+                lui a0, 0xe0000                         # 어짜피 3bit 한 번에 넣을거니까 token자체로 받는다.
+                and a0, a0, a5                          # msb 3bit token에 담음
+                srli a0, a0, 29                         # token >> 29
 
-        li a3, 2
-        bltu a2, a3, L0buf0bit
-        addi a1, a1, -3                                 # bits_should_be_read -3
+                slli a5, a5, 3
+                addi a2, a2, -3                         # bits_in_inbuf
 
-        # sequential_read
-        slli a0, a0, 1                                  # token <<1
-        bltu a5, a4, dontadd0
-        addi a0, a0, 1                                  # msb 1이면 token에 더해줌
-                dontadd0:
-                slli a5, a5, 1
-                addi a2, a2, -1                         # bits_in_inputbuf --;
-
-        slli a0, a0, 1                                  # token <<1
-        bltu a5, a4, dontadd1
-        addi a0, a0, 1                                  # msb 1이면 token에 더해줌
-                dontadd1:
-                slli a5, a5, 1
-                addi a2, a2, -1                         # bits_in_inputbuf --;
-
-        jal match_with_rank
-
-
-        L0buf0bit:
-                bne a2, zero, L0buf1bit
-
-                # load_data 하드코딩
-                lw a4, 92(sp)
-                lw a3, 0(a4)                            # a3에 data load받음
-                addi a4, a4, 4                          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
-                sw a4, 92(sp)                           # inp addr 다시 저장
-
-                # convert_endian 하드코딩
-                srli a4, a3, 24                         # abxxxxxx -> 000000ab
-                slli a5, a3, 24                         # xxxxxxgh -> gh000000
-                or a5, a4, a5                           # gh0000ab
-
-                lui a2, 0x00ff0
-                and a4, a3, a2                          # cd 추출
-                srli a4, a4, 8                          # cd >>
-                or a5, a5, a4                           # gh00cdab
-
-                slli a3, a3, 8
-                and a4, a3, a2
-                or a5, a5, a4                           # ghefcdab
-
-                li a2, 32                               # bits_in_inputbuf = 32로 초기화
-                lui a4, 0x80000
-
-                # sequential_read
-                slli a0, a0, 1                          # token <<1
-                bltu a5, a4, dontadd02
-                addi a0, a0, 1                          # msb 1이면 token에 더해줌
-                        dontadd02:
-                        slli a5, a5, 1
-                        addi a2, a2, -1                 # bits_in_inputbuf --;
-
-                slli a0, a0, 1                          # token <<1
-                bltu a5, a4, dontadd2
-                addi a0, a0, 1                          # msb 1이면 token에 더해줌
-                        dontadd2:
-                        slli a5, a5, 1
-                        addi a2, a2, -1                 # bits_in_inputbuf --;
-
-                addi a1, a1, -3
+                addi a1, a1, -3                         # bits_should_be_read -3
                 jal match_with_rank
 
-        L0buf1bit:
+        only1bit:
+                addi a2, a2, -1                         # 1bit 남아있던거면 이게 0 되지
+                bne a2, zero, only2bits
 
-                # sequential_read
-                slli a0, a0, 1                          # token <<1
-                bltu a5, a4, dontadd3
-                addi a0, a0, 1                          # msb 1이면 token에 더해줌
-                        dontadd3:
-                        slli a5, a5, 1
-                        addi a2, a2, -1                 # bits_in_inputbuf --;
+                # load_data 하드코딩
+                lw a4, 92(sp)
+                lw a3, 0(a4)                            # a3에 data load받음
+                addi a4, a4, 4                          # 읽고 다음에 바로 읽을 수 있게 업데이트 해준다
+                sw a4, 92(sp)                           # inp addr 다시 저장
+
+                # convert_endian 하드코딩
+                srli a4, a3, 24                         # abxxxxxx -> 000000ab
+                slli a5, a3, 24                         # xxxxxxgh -> gh000000
+                or a5, a4, a5                           # gh0000ab
+
+                lui a2, 0x00ff0
+                and a4, a3, a2                          # cd 추출
+                srli a4, a4, 8                          # cd >>
+                or a5, a5, a4                           # gh00cdab
+
+                slli a3, a3, 8
+                and a4, a3, a2
+                or a5, a5, a4                           # ghefcdab
+
+                li a2, 32                               # bits_in_inputbuf = 32로 초기화
+
+                # read 2bits
+                lui a0, 0xc0000                         # 어짜피 2bit 한 번에 넣을거니까 token자체로 받는다.
+                and a0, a0, a5                          # msb 2bit token에 담음
+                srli a0, a0, 30                         # token 3bit msb 0
+                slli a5, a5, 2                          # 읽었으니 <<2
+
+                addi a2, a2, -2                         # bits_in_inbuf -2
+                addi a1, a1, -3                         # should_be_read -3
+                jal match_with_rank
+
+        only2bits:
+                lui a0, 0xc0000                         # 어짜피 2bit 한 번에 넣을거니까 token자체로 받는다.
+                and a0, a0, a5                          # msb 2bit token에 담음
+                srli a0, a0, 29                         # 이따 읽는 1bit가 0이면 가만히 있고 1이면 1더해
 
                 # load_data 하드코딩
                 lw a4, 92(sp)
@@ -264,14 +237,13 @@ decoding_loop:
                 lui a4, 0x80000
 
                 # sequential_read
-                slli a0, a0, 1                          # token <<1
                 bltu a5, a4, dontadd4
                 addi a0, a0, 1                          # msb 1이면 token에 더해줌
                         dontadd4:
                         slli a5, a5, 1
                         addi a2, a2, -1                 # bits_in_inputbuf --;
 
-                addi a1, a1, -3
+                addi a1, a1, -3                         # should_be_read
                 jal match_with_rank
 
     L1xxxx:
