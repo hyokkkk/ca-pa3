@@ -147,9 +147,9 @@ decoding_loop:
 
         addi a0, zero, 0                                # token init : 0
         li a3, 5                                        # inbuf 5bit 이상 남았을 때
-        bltu a2, a3, inbuf_4bit                         # 적게 남았으면 4bit read
-
         lui a4, 0x80000                                 # 이제 몇 bit를 token에 남겨둘지 결정
+
+        bltu a2, a3, inbuf_4bit                         # 적게 남았으면 4bit read
         bgeu a5, a4, _4or5bit                           # 1000 0 보다 크면 4or5bit받아야
         srli a0, a5, 29                                 # 여기 남은 애들은 3bit만 살리면 됨. >>29
 
@@ -180,7 +180,6 @@ inbuf_4bit:
         li a3, 4                                        # inbuf == 4인지 판별
         bne a2, a3, inbuf_3bit                          # 4bit 남은게 아니면 3bit로 가봐라
 
-        lui a4, 0x80000                                 # buf에 4bit만 남아있으면 어짜피 그 뒤는 다 0일꺼아님.
         bgeu a5, a4, __4or5bit                          # 1000보다 크면 4, 5bit으로 가
 
         srli a0, a5, 29                                 # 3bit만 to token
@@ -238,7 +237,6 @@ inbuf_3bit:
         li a3, 3                                        # inbuf ==3 인지 판별
         bne a2, a3, inbuf_2bit                          # 3bit남은게 아니면 2bif로 가
 
-        lui a4, 0x80000                                 # 100보다 같거나 크면 4or5bit 받아야
         bgeu a5, a4, _4or5bit_
 
         srli a0, a5, 29                                 # 남은 3bit 받는다.
@@ -324,7 +322,6 @@ inbuf_2bit:
         li a3, 2                                        # inbuf == 2bit인지 판별
         bne a2, a3, inbuf_1bit                          # 2bit남은게 아니면 1bit으로 가
 
-        lui a4, 0x80000                                 # 10 보다 크면 4or5bit 받아야
         bgeu a5, a4, __4or5bit__
 
         srli a0, a5, 29                                 # 남은 2bit 받고 1bit들어올 자리 남겨놈
@@ -435,7 +432,6 @@ inbuf_2bit:
 
 
 inbuf_1bit:
-        lui a4, 0x80000                                 # 1000보다 크면 4or 5bit
         bgeu a5, a4, ___4or5bit
 
         # 여기는 0xx 받으면 되니까 2bit 읽어서 고대로 token에 넣으면 됨
@@ -702,13 +698,13 @@ full_outBuf:
         srli a4, a3, 24                     # abxxxxxx -> 000000ab
         slli a5, a3, 24                     # xxxxxxgh -> gh000000
         or a5, a4, a5                       # gh0000ab
-        srli a4, a3, 16                     # abcdefgh -> 0000abcd
-        andi a4, a4, 0xff                   # 000000cd
-        slli a4, a4, 8                      # 0000cd00
+        lui ra, 0x00ff0
+        and a4, a3, ra                      # cd 추출
+        srli a4, a4, 8                      # cd >>
         or a5, a5, a4                       # gh00cdab
-        srli a4, a3, 8                      # abcdefgh -> 00abcdef
-        slli a4, a4, 24                     # ef000000
-        srli a4, a4, 8                      # 00ef0000
+
+        slli a3, a3, 8
+        and a4, a3, ra
         or a5, a5, a4                       # ghefcdab
 
         lw a3, 96(sp)                       # outp addr 읽어옴
