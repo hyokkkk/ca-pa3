@@ -193,6 +193,8 @@ printf("empty_bits_in_outbuf: %d\n", empty_bits_in_outbuf);
     if(bits_in_buf_and_mem <= bits_in_inputbuf){
         bits_in_inputbuf = bits_in_buf_and_mem;
     }
+puts("--------------------------------------------");
+
 goto decodingLoop;
 }
 
