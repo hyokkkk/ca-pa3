@@ -311,9 +311,7 @@ inbuf_3bit:
                 li a2, 32                               # bits_in_inputbuf = 32로 초기화
 
                 # read 2bit
-                lui a4, 0xc0000
-                and a4, a4, a5                          # msb 2bit a4에 받는다.
-                srli a4, a4, 30                         # token에 들어가게 >> 30함
+                srli a4, a5, 30                         # token에 들어가게 >> 30함
                 or a0, a0, a4                           # token complete
 
                 addi a2, a2, -2
@@ -393,9 +391,7 @@ inbuf_2bit:
                 li a2, 32                               # bits_in_inputbuf = 32로 초기화
 
                 # read 2bit
-                lui a4, 0xc0000
-                and a4, a4, a5                          # msb 2bit a4에 받는다.
-                srli a4, a4, 30                         # token에 들어가게 >> 30함
+                srli a4, a5, 30                         # token에 들어가게 >> 30함
                 or a0, a0, a4                           # token complete
 
                 addi a2, a2, -2                         # bits_in_inputbuf -2
@@ -429,9 +425,7 @@ inbuf_2bit:
                 li a2, 32                               # bits_in_inputbuf = 32로 초기화
 
                 # read 3bit
-                lui a4, 0xe0000                         # 1110
-                and a4, a4, a5
-                srli a4, a4, 29                         # >>29해서 3bit 만듦.
+                srli a4, a5, 29                         # >>29해서 3bit 만듦.
                 or a0, a0, a4                           # token compelte
 
                 addi a2, a2, -3                         # bits_in_inputbuf -3
@@ -469,9 +463,7 @@ inbuf_1bit:
         li a2, 32                                       # bits_in_inputbuf = 32로 초기화
 
         # read 2bit
-        lui a4, 0xc0000
-        and a4, a4, a5
-        srli a0, a4, 30
+        srli a0, a5, 30
 
         addi a1, a1, -3                                 # should_be_read -3
         addi a2, a2, -2                                 # bits_in_inputbuf -2
