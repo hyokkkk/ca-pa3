@@ -24,8 +24,30 @@
 	.globl	decode
 #-------------------------------------------------------------------#
 
+decode:
+# special handlings
+#   1. inbytes == 0 : return 0
+#   2. length of output(ret) > outbytes : return -1
 
-store_rank:
+        # handle null string
+        li a5, 4
+        bltu a5, a1, begin                              # 길이 4면 rank만 들어오는거임.
+        li a0, 0
+
+        ret
+
+begin:
+        addi sp, sp, -128                               # alloc stack
+
+        # make empty a2, a3
+        sw a2, 96(sp)                                   # *outp @feb0
+        sw a3, 68(sp)                                   # outbytes @feb4
+        sw ra, 72(sp)                                   # ra @feb8
+
+        # handling ranking
+        lw a5, 0(a0)                                    # load rank
+       
+       # store_rank
         sw a0, 92(sp)                                   # empty a0
         sw a1, 64(sp)                                   # empty a1
 
@@ -78,37 +100,7 @@ store_rank:
         rank_done:
                 lw a0, 92(sp)                           # restore a0
                 lw a1, 64(sp)                           # restore a1
-        ret
-#--------------------------------------------------------------#
 
-
-
-
-decode:
-# special handlings
-#   1. inbytes == 0 : return 0
-#   2. length of output(ret) > outbytes : return -1
-
-
-        # handle null string
-        li a5, 4
-        bltu a5, a1, begin                              # 길이 4면 rank만 들어오는거임.
-        li a0, 0
-
-        ret
-
-
-begin:
-        addi sp, sp, -128                               # alloc stack
-
-        # make empty a2, a3
-        sw a2, 96(sp)                                   # *outp @feb0
-        sw a3, 68(sp)                                   # outbytes @feb4
-        sw ra, 72(sp)                                   # ra @feb8
-
-        # handling ranking
-        lw a5, 0(a0)                                    # load rank
-        call store_rank                                 # rank는 굳이 endian convert 필요 없다.
 
 # a0: inp addr, a1: bits_should_be_read, a5: bigendian
         addi a0, a0, 4                                  # next input addr
