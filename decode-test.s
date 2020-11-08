@@ -20,22 +20,22 @@
 
 	.globl	test
 test:
-	.word	test4
-	.word	test0
 	.word	test5
+	.word	test4
 	.word	test3
 	.word	test2
 	.word	test1
+	.word	test0
 #       .word   test10
 
 	.globl	ans
 ans:
-	.word	ans4
-	.word	ans0
 	.word	ans5
+	.word	ans4
 	.word	ans3
 	.word	ans2
 	.word	ans1
+	.word	ans0
 #.word   ans10
 
 #self-made

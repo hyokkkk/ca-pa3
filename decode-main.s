@@ -60,7 +60,7 @@ main:
 
 	addi	sp, sp, -0x100  # 0x8001fef0
 	mv	t0, zero        # loop idx init 0
-	li	t1, 6     # 테케 갯수 
+	li	t1, 1     # 테케 갯수 
 	la	t2, test        # 0x80010000/ *t2 = &test
 	la	t3, ans
 	mv	t6, zero
