@@ -155,9 +155,7 @@ decoding_loop:
         bltu a2, a3, only1bit                           # 3bit보다 적게 남았으면 1bit으로 가라
 
         # read 3bits
-        lui a0, 0xe0000                                 # 어짜피 3bit 한 번에 넣을거니까 token자체로 받는다.
-        and a0, a0, a5                                  # msb 3bit token에 담음
-        srli a0, a0, 29                                 # token >> 29
+        srli a0, a5, 29                                 # token >> 29
 
         slli a5, a5, 3
         addi a2, a2, -3                                 # bits_in_inbuf
@@ -192,9 +190,7 @@ decoding_loop:
                 li a2, 32                               # bits_in_inputbuf = 32로 초기화
 
                 # read 2bits
-                lui a0, 0xc0000                         # 어짜피 2bit 한 번에 넣을거니까 token자체로 받는다.
-                and a0, a0, a5                          # msb 2bit token에 담음
-                srli a0, a0, 30                         # token 3bit msb 0
+                srli a0, a5, 30                         # token 3bit msb 0
                 slli a5, a5, 2                          # 읽었으니 <<2
 
                 addi a2, a2, -2                         # bits_in_inbuf -2
@@ -202,9 +198,7 @@ decoding_loop:
                 jal match_with_rank
 
         only2bits:
-                lui a0, 0xc0000                         # 어짜피 2bit 한 번에 넣을거니까 token자체로 받는다.
-                and a0, a0, a5                          # msb 2bit token에 담음
-                srli a0, a0, 29                         # 이따 읽는 1bit가 0이면 가만히 있고 1이면 1더해
+                srli a0, a5, 29                         # 이따 읽는 1bit가 0이면 가만히 있고 1이면 1더해
 
                 # load_data 하드코딩
                 lw a4, 92(sp)
@@ -277,11 +271,8 @@ decoding_loop:
         bltu a2, a3, _10xx1bit                          # 3bit보다 적게 남았으면 1bit으로 가라
 
         # read 3bits
-        lui a3, 0xe0000                                 # and 할 거 준비
-        and a3, a3, a5                                  # msb 3bit a3에 담음
-        srli a3, a3, 29                                 # a3 >> 29
+        srli a0, a5, 29                                 # a3 >> 29
         addi a0, a0, 8                                  # token: 1000
-        or a0, a0, a3
 
         slli a5, a5, 3                                  # a5 << 3
         addi a2, a2, -3                                 # bits_in_inbuf
@@ -316,11 +307,8 @@ decoding_loop:
                 li a2, 32                               # bits_in_inputbuf = 32로 초기화
 
                 # read 2bits
-                lui a3, 0xc0000
-                and a3, a3, a5                          # msb 2bit a3에 담음
-                srli a3, a3, 30                         # token 3bit msb 0
+                srli a0, a5, 30                         # token 3bit msb 0
                 addi a0, a0, 8                          # token : 1000
-                or a0, a0, a3                           # token complete
 
                 slli a5, a5, 2                          # 읽었으니 <<2
                 addi a2, a2, -2                         # bits_in_inbuf -2
@@ -373,11 +361,8 @@ decoding_loop:
                 bltu a2, a3, _3bitsleft                 # 4bit보다 적게 남았으면 _3bitsleft로 가
 
                 # read 4bits
-                lui a4, 0xf0000
-                and a4, a4, a5                          # msb 4bit a4에 담음
-                srli a4, a4, 28                         # a4 >> 28
+                srli a0, a5, 28                         # a4 >> 28
                 addi a0, a0, 16                         # token : 10000
-                or a0, a0, a4                           # token complete
 
                 slli a5, a5, 4                          # 읽었으니 << 4
                 addi a2, a2, -4                         # bits_in_inbuf -4
@@ -389,11 +374,8 @@ decoding_loop:
                         bne a2, a3, _1bitleft           # 3bit남은게 아니라면 _1bitsleft로 일단 가
 
                         # read 3bits
-                        lui a4, 0xe0000
-                        and a4, a4, a5                  # msb 3bit a4에 담음
-                        srli a4, a4, 28                 # a4 >> 28 (1bit 읽는게 1이면 더하고 0이면 냅둬)
+                        srli a0, a5, 28                 # a4 >> 28 (1bit 읽는게 1이면 더하고 0이면 냅둬)
                         addi a0, a0, 16
-                        or a0, a0, a4                   # lsb 제외 token complete
 
                         # load_data 하드코딩
                         lw a4, 92(sp)
@@ -430,7 +412,6 @@ decoding_loop:
                 _1bitleft:
                         li a3, 1                        # 1bit 남아있던거면 이게 0 되지
                         bne a2, a3, _2bitsleft
-                        addi a0, a0, 0x18               # token : 11000
 
                         # load_data 하드코딩
                         lw a4, 92(sp)
@@ -456,11 +437,9 @@ decoding_loop:
                     
 
                         # read 3bits
-                        lui a4, 0xe0000
-                        and a4, a4, a5                  # msb 3bit a4에 담음
-                        srli a4, a4, 29                 # a4 >> 29
-                        or a0, a0, a4                   # token complete
-
+                        srli a0, a5, 29                 # a4 >> 29
+                        addi a0, a0, 24
+                        
                         slli a5, a5, 3                  # 읽었으니 << 3
                         addi a2, a2, -3                 # bits_in_inbuf -3
                         addi a1, a1, -5                 # bits_should_be_read -5
@@ -469,11 +448,8 @@ decoding_loop:
 
                 _2bitsleft:
                         # read 2bits
-                        lui a3, 0xc0000
-                        and a3, a3, a5                  # msb 2bit a3에 담음
-                        srli a3, a3, 30
-                        addi a0, a3, 4                  # 3bit token (need 2bit more) 야이띨빡아여기가문제엿어!!!!! 으아아아아앙아아아ㅏㅇ아앙 왜 8을 더했니... 0b100이 8이냐고 ㅠㅠㅠ
-                        slli a0, a0, 2                  # 미리 shift 해놓음
+                        srli a0, a5, 28
+                        addi a0, a0, 16                  # 3bit token (need 2bit more) 야이띨빡아여기가문제엿어!!!!! 으아아아아앙아아아ㅏㅇ아앙 왜 8을 더했니... 0b100이 8이냐고 ㅠㅠㅠ
 
                         # load_data 하드코딩
                         lw a4, 92(sp)
@@ -498,9 +474,7 @@ decoding_loop:
                         li a2, 32                       # bits_in_inputbuf = 32로 초기화
 
                         # read 2bits
-                        lui a3, 0xc0000
-                        and a3, a3, a5                  # msb 2bit a3에 담음
-                        srli a3, a3, 30
+                        srli a3, a5, 30
                         or a0, a0, a3                   # token complete
 
                         slli a5, a5, 2                  # 읽었으니 <<2
