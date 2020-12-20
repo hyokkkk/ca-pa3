@@ -21,8 +21,10 @@ CXX		= $(PREFIX)g++
 AS		= $(PREFIX)as
 OBJDUMP		= $(PREFIX)objdump
 
-PYRISC		= ../pyrisc/sim/snurisc.py      # <-- Change this line
-PYRISCOPT	= -l 3 		#-c 3573 		# show logs after cycle m
+#PYRISC		= ../pyrisc/sim/snurisc.py      # <-- Change this line
+PYRISCREF 	= ../pyrisc/pipe5/snurisc5.py 
+PYRISC 		= ../ca-pa4/snurisc6.py
+PYRISCOPT	= -l 5 		#-c 3573 		# show logs after cycle m
 
 INCDIR		=
 LIBDIR		=
@@ -34,6 +36,7 @@ LDFLAGS		= -T./link.ld -nostdlib -nostartfiles
 OBJDFLAGS	= -D --section=.text --section=.data
 
 TARGET		= decode
+DTARGET 	= decode 
 ASRCS		= decode.s decode-main.s decode-test.s
 OBJS		= $(ASRCS:.s=.o)
 
