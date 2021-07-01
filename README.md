@@ -2,8 +2,10 @@
 # Project #3: RISC-V Assembly Programming
 ### Due: 11:59PM, November 8 (Sunday)
 
-### :star: venv deactivate하고 다시 activate시킨 후에는, make하기 전에 export PATH=/opt/riscv/bin:$PATH 써줘야함
-### 디버깅 팁
+---
+
+#### :star: venv deactivate하고 다시 activate시킨 후에는, make하기 전에 export PATH=/opt/riscv/bin:$PATH 써줘야함
+#### 디버깅 팁
 > $ riscv32-unknown-elf-objdump -D decode > decode.objdump      
 > 하면 decode 파일을 disassemble해서 pc 명령 볼 수 있다.
 
